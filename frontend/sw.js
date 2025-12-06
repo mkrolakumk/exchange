@@ -1,4 +1,5 @@
-const CACHE_NAME = 'exchange-v1';
+const VERSION = 'v1';
+const CACHE_NAME = `exchange-${VERSION}`;
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
