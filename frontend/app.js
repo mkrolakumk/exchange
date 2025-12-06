@@ -16,8 +16,7 @@ async function checkBackendHealth() {
 async function updateStatus() {
   const isOnline = await checkBackendHealth();
   document.body.classList.toggle('offline', !isOnline);
-  document.getElementById('status').textContent =
-    'Status Kantoru: ' + (isOnline ? 'Online' : 'Offline');
+  document.getElementById('status').textContent = isOnline ? 'Online' : 'Offline';
 }
 
 setTimeout(() => {

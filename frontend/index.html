@@ -6,11 +6,18 @@
     <meta name="theme-color" content="#4A90E2" />
     <title>Kantor Internetowy</title>
     <link rel="manifest" href="/manifest.json" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <div id="app">
-      <h1>Kantor</h1>
-      <div id="status"></div>
+      <header>
+        <h1>Kantor</h1>
+        <div class="status-bar">
+          <span class="status-dot"></span>
+          <span id="status">Łączenie...</span>
+        </div>
+      </header>
+      <main id="main-content"></main>
     </div>
     <script src="./app.js"></script>
     <script>

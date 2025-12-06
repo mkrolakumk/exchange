@@ -1,7 +1,15 @@
 // Stałe aplikacji
 const VERSION = 'v1';
 const CACHE_NAME = `exchange-${VERSION}`;
-const APP_ASSETS = ['/', '/index.html', '/app.js', '/manifest.json', '/favicon.ico', '/assets'];
+const APP_ASSETS = [
+  '/',
+  '/index.html',
+  '/app.js',
+  '/style.css',
+  '/manifest.json',
+  '/favicon.ico',
+  '/assets',
+];
 
 // Instalacja Service Workera i cache'owanie zasobów aplikacji
 self.addEventListener('install', (event) => {
