@@ -69,6 +69,28 @@ const currencies = {
   },
 };
 
+const backend = {
+  async getStatus() {
+    const status = await dbGet('backend_status');
+    return status || { isOnline: false, lastCheck: 0, lastOnline: 0 };
+  },
+
+  async setStatus(isOnline) {
+    const now = Date.now();
+    const current = await this.getStatus();
+    await dbSet('backend_status', {
+      isOnline,
+      lastCheck: now,
+      lastOnline: isOnline ? now : current.lastOnline,
+    });
+  },
+
+  async getLastOnlineAge() {
+    const status = await this.getStatus();
+    return Date.now() - status.lastOnline;
+  },
+};
+
 async function checkBackendHealth() {
   try {
     const response = await fetch(`${API_BASE}/status`, {
@@ -76,8 +98,11 @@ async function checkBackendHealth() {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(5000),
     });
-    return response.ok;
+    const isOnline = response.ok;
+    await backend.setStatus(isOnline);
+    return isOnline;
   } catch {
+    await backend.setStatus(false);
     return false;
   }
 }
@@ -332,9 +357,18 @@ async function render() {
 }
 
 async function updateStatus() {
-  const isOnline = await checkBackendHealth();
-  document.body.classList.toggle('offline', !isOnline);
-  document.getElementById('status').textContent = isOnline ? 'Online' : 'Offline';
+  await checkBackendHealth();
+  const status = await backend.getStatus();
+  document.body.classList.toggle('offline', !status.isOnline);
+
+  if (status.isOnline) {
+    document.getElementById('status').textContent = 'Online';
+  } else {
+    const age = await backend.getLastOnlineAge();
+    const minutes = Math.floor(age / 60000);
+    document.getElementById('status').textContent =
+      minutes > 0 ? `Offline (${minutes} min)` : 'Offline';
+  }
 }
 
 async function init() {
