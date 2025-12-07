@@ -134,20 +134,82 @@ body.offline .status-dot {
   background: var(--error);
 }
 
+.auth-container {
+  max-width: 400px;
+  margin: 40px auto;
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auth-container h2 {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.auth-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-container input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.auth-container button {
+  padding: 12px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.auth-container button:hover {
+  background: #357abd;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #666;
+}
+
+.auth-switch a {
+  color: #4a90e2;
+  text-decoration: none;
+}
+
+.error {
+  color: #f44336;
+  font-size: 14px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.success {
+  color: #4caf50;
+  font-size: 14px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.dashboard {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .hidden {
   display: none !important;
-}
-
-.error-message {
-  color: var(--error);
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-}
-
-.success-message {
-  color: var(--success);
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
 }
 
 @media (max-width: 768px) {

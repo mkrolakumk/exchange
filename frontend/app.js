@@ -68,8 +68,8 @@ async function login(email, password) {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Błąd logowania' }));
-    throw new Error(error.detail || 'Nieprawidłowe dane logowania');
+    const error = await response.json();
+    throw new Error(error.detail || 'Błąd logowania');
   }
 
   const data = await response.json();
@@ -77,56 +77,131 @@ async function login(email, password) {
   return data;
 }
 
+async function register(email, password, firstName, lastName) {
+  const response = await fetch(`${API_BASE}/users/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      password,
+      first_name: firstName,
+      last_name: lastName,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Błąd rejestracji');
+  }
+
+  return await response.json();
+}
+
 async function logout() {
   await auth.clearToken();
   render();
 }
 
-async function render() {
+function renderLogin() {
   const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="auth-container">
+      <h2>Logowanie</h2>
+      <form id="login-form">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Hasło" required>
+        <button type="submit">Zaloguj</button>
+      </form>
+      <p class="auth-switch">
+        Nie masz konta? <a href="#" id="show-register">Zarejestruj się</a>
+      </p>
+      <div id="error" class="error"></div>
+    </div>
+  `;
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('error');
+
+    try {
+      await login(email, password);
+      render();
+    } catch (err) {
+      errorEl.textContent = err.message;
+    }
+  });
+
+  document.getElementById('show-register').addEventListener('click', (e) => {
+    e.preventDefault();
+    renderRegister();
+  });
+}
+
+function renderRegister() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="auth-container">
+      <h2>Rejestracja</h2>
+      <form id="register-form">
+        <input type="text" id="first-name" placeholder="Imię" required>
+        <input type="text" id="last-name" placeholder="Nazwisko" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Hasło" required minlength="3">
+        <button type="submit">Zarejestruj</button>
+      </form>
+      <p class="auth-switch">
+        Masz już konto? <a href="#" id="show-login">Zaloguj się</a>
+      </p>
+      <div id="error" class="error"></div>
+      <div id="success" class="success"></div>
+    </div>
+  `;
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const firstName = document.getElementById('first-name').value;
+    const lastName = document.getElementById('last-name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorEl = document.getElementById('error');
+    const successEl = document.getElementById('success');
+
+    try {
+      await register(email, password, firstName, lastName);
+      await login(email, password);
+      render();
+    } catch (err) {
+      errorEl.textContent = err.message;
+    }
+  });
+
+  document.getElementById('show-login').addEventListener('click', (e) => {
+    e.preventDefault();
+    renderLogin();
+  });
+}
+
+function renderDashboard() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="dashboard">
+      <h2>Panel główny</h2>
+      <button id="logout-btn">Wyloguj</button>
+    </div>
+  `;
+
+  document.getElementById('logout-btn').addEventListener('click', logout);
+}
+
+async function render() {
   const loggedIn = await auth.isLoggedIn();
 
   if (loggedIn) {
-    main.innerHTML = `
-      <div class="card">
-        <h2>Panel użytkownika</h2>
-        <p>Jesteś zalogowany</p>
-        <button onclick="logout()">Wyloguj</button>
-      </div>
-    `;
+    renderDashboard();
   } else {
-    main.innerHTML = `
-      <div class="card">
-        <h2>Logowanie</h2>
-        <form id="login-form">
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="email" required>
-          </div>
-          <div class="form-group">
-            <label>Hasło</label>
-            <input type="password" id="password" required>
-          </div>
-          <button type="submit">Zaloguj</button>
-          <div id="login-error" class="error-message hidden"></div>
-        </form>
-      </div>
-    `;
-
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('login-error');
-
-      try {
-        await login(email, password);
-        render();
-      } catch (err) {
-        errorEl.textContent = err.message;
-        errorEl.classList.remove('hidden');
-      }
-    });
+    renderLogin();
   }
 }
 
