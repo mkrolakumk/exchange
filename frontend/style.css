@@ -208,6 +208,18 @@ body.offline .status-dot {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.user-info {
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.user-info p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
 .hidden {
   display: none !important;
 }

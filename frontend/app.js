@@ -11,11 +11,20 @@ const auth = {
 
   async clearToken() {
     await dbDelete('token');
+    await dbDelete('user');
   },
 
   async isLoggedIn() {
     const token = await this.getToken();
     return !!token;
+  },
+
+  async getUser() {
+    return await dbGet('user');
+  },
+
+  async setUser(user) {
+    await dbSet('user', user);
   },
 };
 
@@ -50,6 +59,8 @@ async function verifyToken() {
       return false;
     }
 
+    const user = await response.json();
+    await auth.setUser(user);
     return true;
   } catch {
     return false;
@@ -183,11 +194,13 @@ function renderRegister() {
   });
 }
 
-function renderDashboard() {
+async function renderDashboard() {
   const main = document.getElementById('main-content');
+  const user = await auth.getUser();
+
   main.innerHTML = `
     <div class="dashboard">
-      <h2>Panel główny</h2>
+      <h2>Witaj, ${user?.first_name || 'Użytkowniku'}!</h2>
       <button id="logout-btn">Wyloguj</button>
     </div>
   `;
@@ -199,7 +212,7 @@ async function render() {
   const loggedIn = await auth.isLoggedIn();
 
   if (loggedIn) {
-    renderDashboard();
+    await renderDashboard();
   } else {
     renderLogin();
   }
