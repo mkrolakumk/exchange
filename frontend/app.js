@@ -12,6 +12,7 @@ const auth = {
   async clearToken() {
     await dbDelete('token');
     await dbDelete('user');
+    await dbDelete('trades');
   },
 
   async isLoggedIn() {
@@ -26,6 +27,14 @@ const auth = {
   async setUser(user) {
     await dbSet('user', user);
   },
+
+  async getTrades() {
+    return await dbGet('trades');
+  },
+
+  async setTrades(trades) {
+    await dbSet('trades', trades);
+  },
 };
 
 async function checkBackendHealth() {
@@ -38,6 +47,29 @@ async function checkBackendHealth() {
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+async function fetchTrades() {
+  try {
+    const token = await auth.getToken();
+    if (!token) return;
+
+    const response = await fetch(`${API_BASE}/trades/trades`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.ok) {
+      const trades = await response.json();
+      await auth.setTrades(trades);
+      console.log('Zaktualizowano historię transakcji: ', trades);
+    }
+  } catch (err) {
+    console.error('Błąd podczas pobierania transakcji: ', err);
   }
 }
 
@@ -229,6 +261,12 @@ async function init() {
   render();
   updateStatus();
   setInterval(updateStatus, 10000);
+
+  setInterval(async () => {
+    if ((await checkBackendHealth()) && (await auth.isLoggedIn())) {
+      fetchTrades();
+    }
+  }, 10000);
 }
 
 init();
