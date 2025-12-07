@@ -37,6 +37,38 @@ const auth = {
   },
 };
 
+const prices = {
+  async get() {
+    return await dbGet('prices');
+  },
+
+  async set(data) {
+    await dbSet('prices', {
+      data,
+      timestamp: Date.now(),
+    });
+  },
+
+  async getAge() {
+    const cached = await this.get();
+    if (!cached) return Infinity;
+    return Date.now() - cached.timestamp;
+  },
+};
+
+const currencies = {
+  async get() {
+    return await dbGet('currencies');
+  },
+
+  async set(data) {
+    await dbSet('currencies', {
+      data,
+      timestamp: Date.now(),
+    });
+  },
+};
+
 async function checkBackendHealth() {
   try {
     const response = await fetch(`${API_BASE}/status`, {
@@ -71,6 +103,55 @@ async function fetchTrades() {
   } catch (err) {
     console.error('Błąd podczas pobierania transakcji: ', err);
   }
+}
+
+async function fetchPrices() {
+  try {
+    const response = await fetch(`${API_BASE}/currencies/prices`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      await prices.set(data);
+      console.log('Zaktualizowano ceny walut: ', data);
+    }
+  } catch {}
+}
+
+async function fetchCurrencies() {
+  try {
+    const response = await fetch(`${API_BASE}/currencies/`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      await currencies.set(data);
+      console.log('Zaktualizowano listę walut: ', data);
+    }
+  } catch {}
+}
+
+async function startRatesFetching() {
+  if (await checkBackendHealth()) {
+    fetchPrices();
+    fetchCurrencies();
+  }
+
+  setInterval(async () => {
+    if (await checkBackendHealth()) {
+      fetchPrices();
+    }
+  }, 3000);
+
+  setInterval(async () => {
+    if (await checkBackendHealth()) {
+      fetchCurrencies();
+    }
+  }, 30000);
 }
 
 async function verifyToken() {
@@ -267,6 +348,8 @@ async function init() {
       fetchTrades();
     }
   }, 10000);
+
+  startRatesFetching();
 }
 
 init();
