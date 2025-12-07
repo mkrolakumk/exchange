@@ -42,7 +42,15 @@ const prices = {
     return await dbGet('prices');
   },
 
+  async getPrevious() {
+    return await dbGet('prices_previous');
+  },
+
   async set(data) {
+    const current = await this.get();
+    if (current?.data) {
+      await dbSet('prices_previous', current);
+    }
     await dbSet('prices', {
       data,
       timestamp: Date.now(),

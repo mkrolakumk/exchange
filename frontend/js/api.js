@@ -67,17 +67,20 @@ async function fetchCurrencies() {
     if (response.ok) {
       const data = await response.json();
       await currencies.set(data);
-      console.log('Zaktualizowano listę walut: ', data);
     }
   } catch {}
 }
 
 async function startRatesFetching() {
+  const status = await backend.getStatus();
+  if (status.isOnline) {
+    await fetchCurrencies();
+  }
+
   const fetchIfOnline = async () => {
     const status = await backend.getStatus();
     if (status.isOnline) {
       await fetchPrices();
-      await fetchCurrencies();
     }
   };
 
