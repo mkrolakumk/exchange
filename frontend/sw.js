@@ -5,6 +5,7 @@ const APP_ASSETS = [
   '/',
   '/index.html',
   '/app.js',
+  '/db.js',
   '/style.css',
   '/manifest.json',
   '/favicon.ico',
@@ -40,8 +41,13 @@ self.addEventListener('activate', (event) => {
 // Obsługa żądań sieciowych i serwowanie zasobów z cache'a
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    caches
+      .match(event.request)
+      .then((response) => {
+        return response || fetch(event.request);
+      })
+      .catch((err) => {
+        console.error('Błąd zapytania fetch: ', err);
+      })
   );
 });
