@@ -12,12 +12,42 @@
     <div id="app">
       <header>
         <h1>Kantor</h1>
-        <div class="status-bar">
-          <span class="status-dot"></span>
-          <span id="status">Łączenie...</span>
+        <div class="header-right">
+          <div class="status-bar">
+            <span class="status-dot"></span>
+            <span id="status">Łączenie...</span>
+          </div>
+          <div class="menu-wrapper">
+            <button id="menu-btn" class="menu-btn" aria-label="Menu">
+              <span class="menu-icon"></span>
+            </button>
+            <div id="menu-dropdown" class="menu-dropdown hidden">
+              <div class="menu-header">Menu</div>
+              <a href="#" id="menu-login" class="menu-item">Zaloguj</a>
+              <a href="#" id="menu-register" class="menu-item">Zarejestruj</a>
+              <a href="#home" id="menu-home" class="menu-item hidden">Strona główna</a>
+              <a href="#balance" id="menu-balance" class="menu-item hidden">Salda</a>
+              <a href="#notifications" id="menu-notifications" class="menu-item hidden">Powiadomienia</a>
+              <a href="#" id="menu-logout" class="menu-item hidden">Wyloguj</a>
+            </div>
+            <div id="menu-overlay" class="menu-overlay hidden"></div>
+          </div>
         </div>
       </header>
-      <main id="main-content"></main>
+      <main>
+        <section id="prices-section" class="prices-section">
+          <h2>Aktualne kursy walut</h2>
+          <div id="prices-warning" class="warning hidden">Dane nieaktualne</div>
+          <div id="prices-list" class="prices-list">Ładowanie...</div>
+        </section>
+        <section id="user-section" class="user-section hidden"></section>
+      </main>
+      <div id="modal" class="modal hidden">
+        <div class="modal-content">
+          <span class="modal-close">&times;</span>
+          <div id="modal-body"></div>
+        </div>
+      </div>
     </div>
     <script src="./db.js"></script>
     <script src="./app.js"></script>
