@@ -35,6 +35,14 @@ const auth = {
   async setTrades(trades) {
     await dbSet('trades', trades);
   },
+
+  async getBalance() {
+    return await dbGet('balance');
+  },
+
+  async setBalance(balance) {
+    await dbSet('balance', balance);
+  },
 };
 
 const prices = {

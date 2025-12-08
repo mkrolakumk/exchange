@@ -37,6 +37,29 @@ async function fetchTrades() {
   }
 }
 
+async function fetchBalances() {
+  try {
+    const token = await auth.getToken();
+    if (!token) return;
+
+    const response = await fetch(`${API_BASE}/balance/balance`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.ok) {
+      const balance = await response.json();
+      await auth.setBalance(balance);
+      console.log('Zaktualizowano środki: ', balance);
+    }
+  } catch (err) {
+    console.error('Błąd podczas pobierania środków: ', err);
+  }
+}
+
 async function fetchPrices() {
   try {
     const response = await fetch(`${API_BASE}/currencies/prices`, {
