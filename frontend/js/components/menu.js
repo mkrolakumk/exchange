@@ -8,6 +8,7 @@ function setupMenu() {
   const homeBtn = document.getElementById('menu-home');
   const balanceBtn = document.getElementById('menu-balance');
   const notificationsBtn = document.getElementById('menu-notifications');
+  const historyBtn = document.getElementById('menu-history');
 
   const toggleMenu = () => {
     const isHidden = dropdown.classList.contains('hidden');
@@ -62,6 +63,13 @@ function setupMenu() {
     render();
   });
 
+  historyBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeMenu();
+    currentView = 'history';
+    render();
+  });
+
   logoutBtn.addEventListener('click', async (e) => {
     e.preventDefault();
     closeMenu();
@@ -77,6 +85,7 @@ async function updateMenuState() {
   const homeBtn = document.getElementById('menu-home');
   const balanceBtn = document.getElementById('menu-balance');
   const notificationsBtn = document.getElementById('menu-notifications');
+  const historyBtn = document.getElementById('menu-history');
 
   if (!loginBtn || !registerBtn || !logoutBtn) {
     console.error('Nie znaleziono przycisków menu');
@@ -90,6 +99,7 @@ async function updateMenuState() {
     homeBtn?.classList.remove('hidden');
     balanceBtn?.classList.remove('hidden');
     notificationsBtn?.classList.remove('hidden');
+    historyBtn?.classList.remove('hidden');
   } else {
     loginBtn.classList.remove('hidden');
     registerBtn.classList.remove('hidden');
@@ -97,5 +107,6 @@ async function updateMenuState() {
     homeBtn?.classList.add('hidden');
     balanceBtn?.classList.add('hidden');
     notificationsBtn?.classList.add('hidden');
+    historyBtn?.classList.add('hidden');
   }
 }

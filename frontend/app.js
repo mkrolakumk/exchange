@@ -21,6 +21,8 @@ async function renderUserSection() {
     renderBalanceView(userSection);
   } else if (currentView === 'notifications') {
     renderNotificationsView(userSection);
+  } else if (currentView === 'history') {
+    renderHistoryView(userSection);
   } else {
     renderHomeView(userSection);
   }

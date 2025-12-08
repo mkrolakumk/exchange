@@ -16,6 +16,7 @@ const APP_ASSETS = [
   '/js/views/home.js',
   '/js/views/balance.js',
   '/js/views/notifications.js',
+  '/js/views/history.js',
   '/manifest.json',
   '/favicon.ico',
   '/assets',
