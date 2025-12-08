@@ -37,7 +37,7 @@ async function fetchTrades() {
   }
 }
 
-async function fetchBalances() {
+async function fetchBalance() {
   try {
     const token = await auth.getToken();
     if (!token) return;
@@ -57,6 +57,64 @@ async function fetchBalances() {
     }
   } catch (err) {
     console.error('Błąd podczas pobierania środków: ', err);
+  }
+}
+
+async function depositBalance(currency_code, amount) {
+  try {
+    const token = await auth.getToken();
+    if (!token) return;
+
+    const response = await fetch(
+      `${API_BASE}/balance/deposit?amount=${amount}&currency_code=${currency_code}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Błąd podczas dodawania środków');
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error('Błąd podczas dodawania środków: ', err);
+    throw err;
+  }
+}
+
+async function withdrawBalance(currency_code, amount, bank_account) {
+  try {
+    const token = await auth.getToken();
+    if (!token) return;
+
+    const response = await fetch(
+      `${API_BASE}/balance/withdraw?amount=${amount}&currency_code=${currency_code}?bank_account=${bank_account}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Błąd podczas zlecania wypłaty środków');
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error('Błąd podczas zlecania wypłaty środków: ', err);
+    throw err;
   }
 }
 

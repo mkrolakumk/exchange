@@ -60,7 +60,7 @@ async function init() {
   setInterval(async () => {
     if ((await checkBackendHealth()) && (await auth.isLoggedIn())) {
       fetchTrades();
-      fetchBalances();
+      fetchBalance();
     }
   }, 10000);
 
