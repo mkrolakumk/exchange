@@ -1,7 +1,7 @@
 async function renderBalanceView(container) {
   let balance = (await auth.getBalance()) || {};
   let currenciesDB = (await currencies.get())['data'] || {};
-  let preferredCurrency = 'PLN'; // TODO: Umożliwić wybór waluty przez użytkownika, automatyczne wykrywanie po geolokalizacji
+  let preferredCurrency = 'PLN';
   let preferredCurrencies = new Set([preferredCurrency, 'USD', 'EUR', 'PLN', 'GBP', 'CHF']);
 
   for (let [currency, amount] of Object.entries(balance)) {
@@ -19,15 +19,23 @@ async function renderBalanceView(container) {
   });
 
   const backendStatus = await backend.getStatus();
-  const canDeposit = backendStatus.isOnline;
+  const isOnline = backendStatus.isOnline;
+  const pendingCount = await operationsQueue.count();
 
-  let balanceHTML = '<h2 class="balance-title">Twoje Środki</h2><div class="balance-grid">';
+  let balanceHTML = '<h2 class="balance-title">Twoje Środki</h2>';
+
+  if (pendingCount > 0) {
+    balanceHTML += `<div class="warning">⏳ Masz ${pendingCount} oczekującą operację${
+      pendingCount > 1 ? ' operacji' : ''
+    }</div>`;
+  }
+
+  balanceHTML += '<div class="balance-grid">';
 
   preferredCurrencies.forEach((currency) => {
     const amount = Number(currenciesToDisplay[currency]?.balance || 0);
     const name = currenciesToDisplay[currency]?.name || currency;
     const hasBalance = amount > 0;
-    const canWithdraw = canDeposit && hasBalance;
 
     balanceHTML += `
       <div class="balance-card ${hasBalance ? 'has-balance' : ''}">
@@ -35,11 +43,9 @@ async function renderBalanceView(container) {
         <div class="balance-name">${name}</div>
         <div class="balance-amount">${amount.toFixed(2)}</div>
         <div class="balance-actions">
-          <button class="btn-deposit" data-currency="${currency}" ${
-      !canDeposit ? 'disabled' : ''
-    }>Wpłać</button>
+          <button class="btn-deposit" data-currency="${currency}">Wpłać</button>
           <button class="btn-withdraw" data-currency="${currency}" ${
-      !canWithdraw ? 'disabled' : ''
+      !hasBalance ? 'disabled' : ''
     }>Wypłać</button>
         </div>
       </div>
@@ -52,26 +58,102 @@ async function renderBalanceView(container) {
   container.querySelectorAll('.btn-deposit').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       const currency = e.target.dataset.currency;
-      const amount = prompt(`Wpłać ${currency}:`);
-      if (amount && !isNaN(amount) && Number(amount) > 0) {
-        try {
-          await depositBalance(currency, Number(amount));
-          await fetchBalance();
-          renderBalanceView(container);
-        } catch (err) {
-          alert('Błąd wpłaty: ' + err.message);
-        }
-      }
+      await handleDeposit(currency, container, isOnline);
     });
   });
 
   container.querySelectorAll('.btn-withdraw').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       const currency = e.target.dataset.currency;
-      const amount = prompt(`Wypłać ${currency}:`);
-      if (amount && !isNaN(amount) && Number(amount) > 0) {
-        alert('Funkcja wypłaty w przygotowaniu');
-      }
+      const currentBalance = Number(currenciesToDisplay[currency]?.balance || 0);
+      await handleWithdraw(currency, currentBalance, container, isOnline);
     });
   });
+}
+
+async function handleDeposit(currency, container, isOnline) {
+  const amountStr = prompt(`Wpłać ${currency}:\n(Max 100 000 ${currency})`);
+  if (!amountStr) return;
+
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount <= 0 || amount > 100000) {
+    alert('Kwota musi być między 0.01 a 100 000');
+    return;
+  }
+
+  if (!/^\d+(\.\d{1,2})?$/.test(amountStr)) {
+    alert('Podaj wartość z maksymalnie 2 miejscami po przecinku');
+    return;
+  }
+
+  if (!isOnline) {
+    const proceed = confirm('Brak połączenia z serwisem. Zakolejkować operację?');
+    if (!proceed) return;
+    await operationsQueue.add('deposit', currency, amount);
+    alert('Operacja zakolejkowana');
+    renderBalanceView(container);
+    return;
+  }
+
+  try {
+    await depositBalance(currency, amount);
+    await fetchBalance();
+    renderBalanceView(container);
+  } catch (err) {
+    const retry = confirm('Błąd połączenia z serwisem. Zakolejkować operację?');
+    if (retry) {
+      await operationsQueue.add('deposit', currency, amount);
+      alert('Operacja zakolejkowana');
+      renderBalanceView(container);
+    }
+  }
+}
+
+async function handleWithdraw(currency, currentBalance, container, isOnline) {
+  const amountStr = prompt(
+    `Wypłać ${currency}:\n(Max ${currentBalance.toFixed(2)}, 2 miejsca po przecinku)`
+  );
+  if (!amountStr) return;
+
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount <= 0 || amount > currentBalance || amount > 100000) {
+    alert(`Kwota musi być między 0.01 a ${Math.min(currentBalance, 100000).toFixed(2)}`);
+    return;
+  }
+
+  if (!/^\d+(\.\d{1,2})?$/.test(amountStr)) {
+    alert('Podaj wartość z maksymalnie 2 miejscami po przecinku');
+    return;
+  }
+
+  const bankAccount = prompt('Podaj numer konta do wypłaty (26 cyfr):');
+  if (!bankAccount) return;
+
+  if (!/^\d{26}$/.test(bankAccount)) {
+    alert('Numer konta musi mieć dokładnie 26 cyfr');
+    return;
+  }
+
+  if (!isOnline) {
+    const proceed = confirm('Brak połączenia z serwisem. Zakolejkować operację?');
+    if (!proceed) return;
+    await operationsQueue.add('withdraw', currency, amount, bankAccount);
+    alert('Operacja zakolejkowana');
+    renderBalanceView(container);
+    return;
+  }
+
+  try {
+    await withdrawBalance(currency, amount, bankAccount);
+    await fetchBalance();
+    renderBalanceView(container);
+  } catch (err) {
+    console.error('Brak połączenia z backendem: ', err);
+    const retry = confirm('Brak połączenia z serwisem. Zakolejkować operację?');
+    if (retry) {
+      await operationsQueue.add('withdraw', currency, amount, bankAccount);
+      alert('Operacja zakolejkowana');
+      renderBalanceView(container);
+    }
+  }
 }

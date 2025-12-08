@@ -95,7 +95,7 @@ async function withdrawBalance(currency_code, amount, bank_account) {
     if (!token) return;
 
     const response = await fetch(
-      `${API_BASE}/balance/withdraw?amount=${amount}&currency_code=${currency_code}?bank_account=${bank_account}`,
+      `${API_BASE}/balance/withdraw?amount=${amount}&currency_code=${currency_code}&bank_account=${bank_account}`,
       {
         method: 'POST',
         headers: {
