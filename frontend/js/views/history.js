@@ -11,7 +11,8 @@ async function renderHistoryView(container) {
     for (let trade of Object.values(historyTrades)) {
       new_obj = {
         type: trade.trade_type == 'BUY' ? 'Kupno' : 'Sprzedaż',
-        currency_code: trade.currency_code,
+        currency_source_code: trade.currency_code,
+        currency_code: 'PLN',
         currency_name: currenciesDB[trade.currency_code]?.['name'] || trade.currency_code,
         date: trade.timestamp,
         amount: Number(trade.amount).toFixed(2),
@@ -64,23 +65,36 @@ async function renderHistoryView(container) {
       minute: '2-digit',
     });
 
+    const isBuy = trade.type === 'Kupno';
+    const fromCurrency = isBuy ? 'PLN' : trade.currency_source_code;
+    const toCurrency = isBuy ? trade.currency_source_code : 'PLN';
+    const fromAmount = isBuy ? trade.total : trade.amount;
+    const toAmount = isBuy ? trade.amount : trade.total;
+    const pairDescription = isBuy
+      ? `${trade.currency_source_code}/PLN - ${trade.currency_name} / Polski Złoty`
+      : `${trade.currency_source_code}/PLN - ${trade.currency_name} / Polski Złoty`;
+
     historyHTML += `
       <div class="history-item">
-        <div class="history-type ${trade.type === 'Kupno' ? 'buy' : 'sell'}">
+        <div class="history-type ${isBuy ? 'buy' : 'sell'}">
           ${trade.type}
         </div>
-        <div class="history-currency">
-          <div class="history-code">${trade.currency_code}</div>
-          <div class="history-name">${trade.currency_name}</div>
+        <div class="history-exchange">
+          <div class="history-from">
+            <span class="history-amount">${fromAmount}</span>
+            <span class="history-currency">${fromCurrency}</span>
+          </div>
+          <div class="history-arrow">→</div>
+          <div class="history-to">
+            <span class="history-amount">${toAmount}</span>
+            <span class="history-currency">${toCurrency}</span>
+          </div>
         </div>
-        <div class="history-details">
-          <div class="history-amount">${trade.amount} ${trade.currency_code}</div>
-          <div class="history-rate">@ ${trade.rate} PLN</div>
+        <div class="history-info">
+          <div class="history-name">${pairDescription}</div>
+          <div class="history-rate">1 ${trade.currency_source_code} = ${trade.rate} PLN</div>
         </div>
-        <div class="history-meta">
-          <div class="history-total">${trade.total} PLN</div>
-          <div class="history-date">${formattedDate}</div>
-        </div>
+        <div class="history-date">${formattedDate}</div>
       </div>
     `;
   });
