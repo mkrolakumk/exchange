@@ -565,9 +565,14 @@ body.offline .status-dot {
   gap: 0.75rem;
 }
 
+.price-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
 .price-row {
   display: grid;
-  grid-template-columns: 50px 2fr 1.2fr 1.2fr;
+  grid-template-columns: 50px 2fr 1.2fr 1.2fr 40px;
   gap: 1.25rem;
   align-items: center;
   padding: 1.25rem 1.5rem;
@@ -576,12 +581,80 @@ body.offline .status-dot {
   border-radius: var(--radius-lg);
   transition: all 0.3s ease;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
 }
 
 .price-row:hover {
   box-shadow: var(--shadow);
   transform: translateY(-2px);
   border-color: var(--primary-light);
+}
+
+.price-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-icon {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  transition: transform 0.3s ease;
+}
+
+.price-details {
+  padding: 1.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin-top: -0.5rem;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chart-btn {
+  padding: 0.5rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-btn:hover {
+  background: var(--border-light);
+}
+
+.chart-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.chart-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.chart-container canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.chart-error {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .price-index {

@@ -128,7 +128,7 @@ async function fetchPrices() {
     if (response.ok) {
       const data = await response.json();
       await prices.set(data);
-      await renderPrices();
+      await updatePrices();
       return true;
     }
     return false;
