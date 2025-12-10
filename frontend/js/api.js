@@ -238,3 +238,54 @@ async function register(email, password, firstName, lastName) {
 
   return await response.json();
 }
+
+async function fetchPreferences() {
+  try {
+    const token = await auth.getToken();
+    if (!token) return;
+
+    const response = await fetch(`${API_BASE}/users/preferences/notifications`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      await preferences.set(data);
+    }
+  } catch (err) {
+    console.error('Błąd podczas pobierania preferencji:', err);
+  }
+}
+
+async function updateNotifications(notifications) {
+  try {
+    const token = await auth.getToken();
+    if (!token) throw new Error('Brak tokena');
+
+    const response = await fetch(`${API_BASE}/users/preferences/notifications`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ notifications }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Błąd podczas zapisywania powiadomień');
+    }
+
+    const data = await response.json();
+    await preferences.set(data);
+    return data;
+  } catch (err) {
+    console.error('Błąd podczas zapisywania powiadomień:', err);
+    throw err;
+  }
+}

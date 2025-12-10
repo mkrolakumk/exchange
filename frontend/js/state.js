@@ -111,3 +111,16 @@ const backend = {
     return Date.now() - status.lastOnline;
   },
 };
+
+const preferences = {
+  async get() {
+    return await dbGet('preferences');
+  },
+
+  async set(data) {
+    await dbSet('preferences', {
+      data,
+      timestamp: Date.now(),
+    });
+  },
+};

@@ -61,6 +61,7 @@ async function init() {
     if ((await checkBackendHealth()) && (await auth.isLoggedIn())) {
       fetchTrades();
       fetchBalance();
+      fetchPreferences();
       processQueuePeriodically();
     }
   }, 10000);
