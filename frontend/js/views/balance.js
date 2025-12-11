@@ -1,7 +1,7 @@
 async function renderBalanceView(container) {
   let balance = (await auth.getBalance()) || {};
   let currenciesDB = (await currencies.get())['data'] || {};
-  let preferredCurrency = 'PLN';
+  let preferredCurrency = await geolocation.getPreferredCurrency();
   let preferredCurrencies = new Set([preferredCurrency, 'USD', 'EUR', 'PLN', 'GBP', 'CHF']);
 
   for (let [currency, amount] of Object.entries(balance)) {
