@@ -64,9 +64,15 @@ async function init() {
       fetchPreferences();
       processQueuePeriodically();
     }
-  }, 10000);
+  }, 2000);
 
   startRatesFetching();
+
+  install.init();
+
+  setTimeout(async () => {
+    await onboarding.start();
+  }, 1000);
 }
 
 init();

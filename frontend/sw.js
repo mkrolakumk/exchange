@@ -9,6 +9,8 @@ const APP_ASSETS = [
   '/css/style.css',
   '/js/state.js',
   '/js/geolocation.js',
+  '/js/install.js',
+  '/js/onboarding.js',
   '/js/api.js',
   '/js/router.js',
   '/js/components/menu.js',
