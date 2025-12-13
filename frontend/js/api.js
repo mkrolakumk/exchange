@@ -79,7 +79,7 @@ async function fetchBalance() {
 async function depositBalance(currency_code, amount) {
   try {
     const token = await auth.getToken();
-    if (!token) return;
+    if (!token) throw new Error('Brak tokena');
 
     const response = await apiFetch(
       `${API_BASE}/balance/deposit?amount=${amount}&currency_code=${currency_code}`,
@@ -108,7 +108,7 @@ async function depositBalance(currency_code, amount) {
 async function withdrawBalance(currency_code, amount, bank_account) {
   try {
     const token = await auth.getToken();
-    if (!token) return;
+    if (!token) throw new Error('Brak tokena');
 
     const response = await apiFetch(
       `${API_BASE}/balance/withdraw?amount=${amount}&currency_code=${currency_code}&bank_account=${bank_account}`,
@@ -136,7 +136,7 @@ async function withdrawBalance(currency_code, amount, bank_account) {
 
 async function fetchPrices() {
   try {
-    const response = await fetch(`${API_BASE}/currencies/prices`, {
+    const response = await apiFetch(`${API_BASE}/currencies/prices`, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(3000),
     });
@@ -161,7 +161,7 @@ async function fetchPrices() {
 
 async function fetchCurrencies() {
   try {
-    const response = await fetch(`${API_BASE}/currencies/`, {
+    const response = await apiFetch(`${API_BASE}/currencies/`, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(5000),
     });
@@ -223,7 +223,7 @@ async function login(email, password) {
   formData.append('username', email);
   formData.append('password', password);
 
-  const response = await fetch(`${API_BASE}/users/login`, {
+  const response = await apiFetch(`${API_BASE}/users/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: formData,
@@ -240,7 +240,7 @@ async function login(email, password) {
 }
 
 async function register(email, password, firstName, lastName) {
-  const response = await fetch(`${API_BASE}/users/register`, {
+  const response = await apiFetch(`${API_BASE}/users/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
