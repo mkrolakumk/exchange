@@ -73,6 +73,11 @@ async function init() {
   setTimeout(async () => {
     await onboarding.start();
   }, 1000);
+
+  window.addEventListener('unauthorized', () => {
+    currentView = 'home';
+    render();
+  });
 }
 
 init();

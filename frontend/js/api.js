@@ -1,3 +1,19 @@
+async function handleUnauthorized() {
+  await auth.clearToken();
+  window.dispatchEvent(new CustomEvent('unauthorized'));
+}
+
+async function apiFetch(url, options = {}) {
+  const response = await fetch(url, options);
+
+  if (response.status === 401) {
+    await handleUnauthorized();
+    throw new Error('Unauthorized');
+  }
+
+  return response;
+}
+
 async function checkBackendHealth() {
   try {
     const response = await fetch(`${API_BASE}/status`, {
@@ -19,7 +35,7 @@ async function fetchTrades() {
     const token = await auth.getToken();
     if (!token) return;
 
-    const response = await fetch(`${API_BASE}/trades/trades`, {
+    const response = await apiFetch(`${API_BASE}/trades/trades`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -42,7 +58,7 @@ async function fetchBalance() {
     const token = await auth.getToken();
     if (!token) return;
 
-    const response = await fetch(`${API_BASE}/balance/balance`, {
+    const response = await apiFetch(`${API_BASE}/balance/balance`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -65,7 +81,7 @@ async function depositBalance(currency_code, amount) {
     const token = await auth.getToken();
     if (!token) return;
 
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE}/balance/deposit?amount=${amount}&currency_code=${currency_code}`,
       {
         method: 'POST',
@@ -94,7 +110,7 @@ async function withdrawBalance(currency_code, amount, bank_account) {
     const token = await auth.getToken();
     if (!token) return;
 
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE}/balance/withdraw?amount=${amount}&currency_code=${currency_code}&bank_account=${bank_account}`,
       {
         method: 'POST',
@@ -183,7 +199,7 @@ async function verifyToken() {
 
   try {
     const token = await auth.getToken();
-    const response = await fetch(`${API_BASE}/users/me`, {
+    const response = await apiFetch(`${API_BASE}/users/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -191,7 +207,6 @@ async function verifyToken() {
     });
 
     if (!response.ok) {
-      await auth.clearToken();
       return false;
     }
 
@@ -249,7 +264,7 @@ async function fetchPreferences() {
     const token = await auth.getToken();
     if (!token) return;
 
-    const response = await fetch(`${API_BASE}/users/preferences/notifications`, {
+    const response = await apiFetch(`${API_BASE}/users/preferences/notifications`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -271,7 +286,7 @@ async function updateNotifications(notifications) {
     const token = await auth.getToken();
     if (!token) throw new Error('Brak tokena');
 
-    const response = await fetch(`${API_BASE}/users/preferences/notifications`, {
+    const response = await apiFetch(`${API_BASE}/users/preferences/notifications`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -300,7 +315,7 @@ async function buyCurrency(currencyCode, amount) {
     const token = await auth.getToken();
     if (!token) throw new Error('Brak tokena');
 
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE}/trades/buy?currency_code=${currencyCode}&amount=${amount}`,
       {
         method: 'POST',
@@ -331,7 +346,7 @@ async function sellCurrency(currencyCode, amount) {
     const token = await auth.getToken();
     if (!token) throw new Error('Brak tokena');
 
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE}/trades/sell?currency_code=${currencyCode}&amount=${amount}`,
       {
         method: 'POST',
