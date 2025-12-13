@@ -4,8 +4,10 @@ async function renderBalanceView(container) {
   let preferredCurrency = await geolocation.getPreferredCurrency();
   let preferredCurrencies = new Set([preferredCurrency, 'USD', 'EUR', 'PLN', 'GBP', 'CHF']);
 
-  for (let [currency, amount] of Object.entries(balance)) {
-    if (amount > 0) {
+  for (let [currency, data] of Object.entries(balance)) {
+    console.log(`Sprawdzanie salda waluty: ${currency}, balance: ${data.balance}`);
+    if (data.balance > 0) {
+      console.log(`Dodano do widoku salda walutę z saldem: ${currency} (${data.balance})`);
       preferredCurrencies.add(currency);
     }
   }
