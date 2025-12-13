@@ -229,6 +229,9 @@ async function renderPrices() {
     previous.data.forEach((p) => (prevMap[p.currency_code] = p));
   }
 
+  const isLoggedIn = await auth.isLoggedIn();
+  const balance = isLoggedIn ? (await auth.getBalance()) || {} : {};
+
   const merged = cached.data.map((price, idx) => {
     const currency = currencyMap[price.currency_code];
     const prev = prevMap[price.currency_code];
@@ -246,16 +249,22 @@ async function renderPrices() {
       sell: price.sell_price,
       buyChange: getChange(price.buy_price, prev?.buy_price),
       sellChange: getChange(price.sell_price, prev?.sell_price),
+      userBalance: balance[price.currency_code]?.balance || 0,
     };
   });
 
   const searchInput = document.getElementById('currency-search');
   const currentValue = searchInput?.value || searchQuery;
 
+  const loginPrompt = !isLoggedIn
+    ? '<div class="login-prompt">Zaloguj się lub utwórz konto</a>, aby korzystać z platformy Kantoru.</div>'
+    : '';
+
   list.innerHTML = `
     <div class="search-container">
       <input type="text" id="currency-search" placeholder="Szukaj waluty po kodzie lub nazwie..." value="${currentValue}"/>
     </div>
+    ${loginPrompt}
     <div class="prices-table">
       ${merged
         .map(
@@ -266,6 +275,11 @@ async function renderPrices() {
             <div class="price-currency">
               <div class="currency-code">${c.code}</div>
               <div class="currency-name">${c.name}</div>
+              ${
+                c.userBalance > 0
+                  ? `<div class="user-balance">Posiadasz: ${c.userBalance.toFixed(2)}</div>`
+                  : ''
+              }
             </div>
             <div class="price-value">
               <div class="price-label">Kupno</div>
@@ -275,6 +289,16 @@ async function renderPrices() {
               <div class="price-label">Sprzedaż</div>
               <div class="price-amount ${c.sellChange}">${c.sell.toFixed(4)} PLN</div>
             </div>
+            ${
+              isLoggedIn
+                ? `<div class="price-actions">
+              <button class="btn-buy" data-code="${c.code}" data-rate="${c.buy}">Kup</button>
+              <button class="btn-sell" data-code="${c.code}" data-rate="${c.sell}" ${
+                    c.userBalance === 0 ? 'disabled' : ''
+                  }>Sprzedaj</button>
+            </div>`
+                : ''
+            }
             <div class="price-expand">
               <span class="expand-icon">▼</span>
             </div>
@@ -300,8 +324,37 @@ async function renderPrices() {
     };
   }
 
+  if (!isLoggedIn) {
+    const loginLink = document.querySelector('.login-prompt');
+    if (loginLink) {
+      loginLink.onclick = (e) => {
+        e.preventDefault();
+        if (e.target.id === 'register-link') {
+          showRegisterModal();
+        } else {
+          showLoginModal();
+        }
+      };
+    }
+  } else {
+    document.querySelectorAll('.btn-buy').forEach((btn) => {
+      btn.onclick = async (e) => {
+        e.stopPropagation();
+        await handleBuy(btn.dataset.code, parseFloat(btn.dataset.rate));
+      };
+    });
+
+    document.querySelectorAll('.btn-sell').forEach((btn) => {
+      btn.onclick = async (e) => {
+        e.stopPropagation();
+        await handleSell(btn.dataset.code, parseFloat(btn.dataset.rate));
+      };
+    });
+  }
+
   document.querySelectorAll('.price-row').forEach((row) => {
-    row.onclick = () => {
+    row.onclick = (e) => {
+      if (e.target.closest('.btn-buy, .btn-sell')) return;
       const wrapper = row.closest('.price-wrapper');
       if (wrapper) toggleExpand(wrapper.dataset.code);
     };
@@ -317,6 +370,97 @@ async function renderPrices() {
   }
 
   if (searchQuery) filterList();
+}
+
+async function handleBuy(currencyCode, buyRate) {
+  const balance = await auth.getBalance();
+  const pln = balance?.PLN?.balance || 0;
+
+  const amountStr = prompt(
+    `Kup ${currencyCode}\nKurs: ${buyRate.toFixed(4)} PLN\nTwoje PLN: ${pln.toFixed(
+      2
+    )}\n\nWprowadź ilość ${currencyCode} do kupienia (min 0.01):`
+  );
+  if (!amountStr) return;
+
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount < 0.01) {
+    alert('Podana kwota musi być większa lub równa od 0.01');
+    return;
+  }
+
+  if (!/^\d+(\.\d{1,2})?$/.test(amountStr)) {
+    alert('Podaj wartość z maksymalnie 2 miejscami po przecinku');
+    return;
+  }
+
+  const cost = amount * buyRate;
+  if (cost > pln) {
+    alert(`Niewystarczające środki\nPotrzeba: ${cost.toFixed(2)} PLN\nMasz: ${pln.toFixed(2)} PLN`);
+    return;
+  }
+
+  const backendStatus = await backend.getStatus();
+  if (!backendStatus.isOnline) {
+    alert('Brak połączenia z serwerem. Spróbuj później.');
+    return;
+  }
+
+  try {
+    console.log(`Kupno: ${amount} ${currencyCode} po ${buyRate.toFixed(4)} PLN`);
+    await buyCurrency(currencyCode, amount);
+    await fetchBalance();
+    await fetchTrades();
+    await renderPrices();
+    alert(`Zakupiono ${amount} ${currencyCode}`);
+  } catch (err) {
+    alert(`Błąd: ${err.message}`);
+  }
+}
+
+async function handleSell(currencyCode, sellRate) {
+  const balance = await auth.getBalance();
+  const userAmount = balance?.[currencyCode]?.balance || 0;
+
+  const amountStr = prompt(
+    `Sprzedaj ${currencyCode}\nKurs: ${sellRate.toFixed(4)} PLN\nMasz: ${userAmount.toFixed(
+      2
+    )} ${currencyCode}\n\nIlość do sprzedaży (min 0.01):`
+  );
+  if (!amountStr) return;
+
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount < 0.01) {
+    alert('Podana kwota musi być większa lub równa od 0.01');
+    return;
+  }
+
+  if (!/^\d+(\.\d{1,2})?$/.test(amountStr)) {
+    alert('Podaj wartość z maksymalnie 2 miejscami po przecinku');
+    return;
+  }
+
+  if (amount > userAmount) {
+    alert(`Niewystarczające środki\nMasz: ${userAmount.toFixed(2)} ${currencyCode}`);
+    return;
+  }
+
+  const backendStatus = await backend.getStatus();
+  if (!backendStatus.isOnline) {
+    alert('Brak połączenia z serwerem. Spróbuj później.');
+    return;
+  }
+
+  try {
+    console.log(`Sprzedaż: ${amount} ${currencyCode} po ${sellRate.toFixed(4)} PLN`);
+    await sellCurrency(currencyCode, amount);
+    await fetchBalance();
+    await fetchTrades();
+    await renderPrices();
+    alert(`Sprzedano ${amount} ${currencyCode}`);
+  } catch (err) {
+    alert(`Błąd: ${err.message}`);
+  }
 }
 
 async function updatePrices() {

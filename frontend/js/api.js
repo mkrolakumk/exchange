@@ -294,3 +294,65 @@ async function updateNotifications(notifications) {
     throw err;
   }
 }
+
+async function buyCurrency(currencyCode, amount) {
+  try {
+    const token = await auth.getToken();
+    if (!token) throw new Error('Brak tokena');
+
+    const response = await fetch(
+      `${API_BASE}/trades/buy?currency_code=${currencyCode}&amount=${amount}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Błąd podczas kupna waluty');
+    }
+
+    const data = await response.json();
+    console.log(`Kupiono ${amount} ${currencyCode} po kursie ${data.exchange_rate}`);
+    return data;
+  } catch (err) {
+    console.error('Błąd podczas kupna waluty:', err);
+    throw err;
+  }
+}
+
+async function sellCurrency(currencyCode, amount) {
+  try {
+    const token = await auth.getToken();
+    if (!token) throw new Error('Brak tokena');
+
+    const response = await fetch(
+      `${API_BASE}/trades/sell?currency_code=${currencyCode}&amount=${amount}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Błąd podczas sprzedaży waluty');
+    }
+
+    const data = await response.json();
+    console.log(`Sprzedano ${amount} ${currencyCode} po kursie ${data.exchange_rate}`);
+    return data;
+  } catch (err) {
+    console.error('Błąd podczas sprzedaży waluty:', err);
+    throw err;
+  }
+}
