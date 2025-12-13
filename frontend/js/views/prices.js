@@ -257,7 +257,7 @@ async function renderPrices() {
   const currentValue = searchInput?.value || searchQuery;
 
   const loginPrompt = !isLoggedIn
-    ? '<div class="login-prompt">Zaloguj się lub utwórz konto</a>, aby korzystać z platformy Kantoru.</div>'
+    ? '<div class="login-prompt"><a href="#" id="login-link">Zaloguj się</a> lub <a href="#" id="register-link">utwórz konto</a>, aby korzystać z platformy Kantoru.</div>'
     : '';
 
   list.innerHTML = `
@@ -325,14 +325,16 @@ async function renderPrices() {
   }
 
   if (!isLoggedIn) {
-    const loginLink = document.querySelector('.login-prompt');
-    if (loginLink) {
-      loginLink.onclick = (e) => {
-        e.preventDefault();
-        if (e.target.id === 'register-link') {
-          showRegisterModal();
-        } else {
-          showLoginModal();
+    const loginPrompt = document.querySelector('.login-prompt');
+    if (loginPrompt) {
+      loginPrompt.onclick = (e) => {
+        if (e.target.tagName === 'A') {
+          e.preventDefault();
+          if (e.target.id === 'register-link') {
+            showRegisterModal();
+          } else if (e.target.id === 'login-link') {
+            showLoginModal();
+          }
         }
       };
     }
