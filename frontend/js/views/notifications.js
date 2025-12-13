@@ -4,6 +4,8 @@ async function renderNotificationsView(container) {
   const allCurrencies = await currencies.get();
   const currenciesData = allCurrencies?.data || {};
 
+  const notificationPermission = 'Notification' in window ? Notification.permission : 'unsupported';
+
   const rows = notifications
     .map((n, idx) => {
       const currencyName = currenciesData[n.currency_code]?.name || n.currency_code;
@@ -22,9 +24,25 @@ async function renderNotificationsView(container) {
     .filter(([code]) => code !== 'PLN')
     .map(([code, info]) => ({ code, name: info.name }));
 
+  const permissionBanner =
+    notificationPermission !== 'granted'
+      ? `
+    <div class="notification-permission-banner">
+      ${
+        notificationPermission === 'denied'
+          ? '<p class="permission-denied">⚠️ Powiadomienia zablokowane. Odblokuj w ustawieniach przeglądarki.</p>'
+          : notificationPermission === 'unsupported'
+          ? '<p class="permission-unsupported">⚠️ Twoja przeglądarka nie wspiera powiadomień.</p>'
+          : '<p>Włącz powiadomienia, aby otrzymywać alerty o kursach walut.</p><button id="enable-notifications" class="btn-primary">Włącz powiadomienia</button>'
+      }
+    </div>
+  `
+      : '';
+
   container.innerHTML = `
     <div class="card">
       <h2>Powiadomienia</h2>
+      ${permissionBanner}
       
       <div class="notifications-table">
         <table>
@@ -73,6 +91,16 @@ async function renderNotificationsView(container) {
       </div>
     </div>
   `;
+
+  const enableBtn = container.querySelector('#enable-notifications');
+  if (enableBtn) {
+    enableBtn.addEventListener('click', async () => {
+      const permission = await requestNotificationPermission();
+      if (permission === 'granted') {
+        renderNotificationsView(container);
+      }
+    });
+  }
 
   container.querySelectorAll('.btn-delete').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
@@ -170,6 +198,9 @@ async function handleAddNotification() {
 
   const direction = document.getElementById('notification-direction').value;
   const threshold = parseFloat(document.getElementById('notification-threshold').value);
+  const dirText = direction === 'above' ? 'powyżej' : 'poniżej';
+
+  console.log(`Dodano alert: ${selectedCurrency} ${dirText} ${threshold} PLN`);
 
   const prefs = await preferences.get();
   const notifications = prefs?.data || [];

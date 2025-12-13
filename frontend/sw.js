@@ -20,6 +20,7 @@ const APP_ASSETS = [
   '/js/views/balance.js',
   '/js/views/notifications.js',
   '/js/views/history.js',
+  '/js/notifications.js',
   '/manifest.json',
   '/favicon.ico',
   '/assets',
@@ -62,5 +63,26 @@ self.addEventListener('fetch', (event) => {
       .catch((err) => {
         console.error('Błąd zapytania fetch: ', err);
       })
+  );
+});
+
+// Obsługa kliknięć w powiadomienia push
+self.addEventListener('notificationclick', (event) => {
+  console.log('Kliknięto powiadomienie:', event.notification.title);
+  event.notification.close();
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === self.location.origin + '/' && 'focus' in client) {
+          console.log('Fokus na istniejącą kartę');
+          return client.focus();
+        }
+      }
+      console.log('Otwieranie nowej karty');
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });

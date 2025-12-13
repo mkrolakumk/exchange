@@ -129,6 +129,11 @@ async function fetchPrices() {
       const data = await response.json();
       await prices.set(data);
       await updatePrices();
+
+      if (await auth.isLoggedIn()) {
+        await checkNotificationConditions();
+      }
+
       return true;
     }
     return false;

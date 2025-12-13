@@ -1160,6 +1160,40 @@ body.offline .status-dot {
   border-bottom: none;
 }
 
+.notification-permission-banner {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  color: white;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.notification-permission-banner p {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.notification-permission-banner button {
+  background: white;
+  color: var(--primary);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+}
+
+.notification-permission-banner button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.permission-denied,
+.permission-unsupported {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
 .notification-form {
   border-top: 1px solid var(--border);
   padding-top: 2rem;
