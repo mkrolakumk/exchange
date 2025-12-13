@@ -41,7 +41,7 @@ async function renderHistoryView(container) {
       <div class="empty-icon">📊</div>
       <h3>Brak historii</h3>
       <p>Nie masz jeszcze żadnych transakcji</p>
-      <button class="btn-primary" onclick="currentView='home'; render();">
+      <button class="btn-primary" onclick="appState.setView('home'); render();">
         Zacznij wymieniać waluty, to takie proste!
       </button>
     </div>

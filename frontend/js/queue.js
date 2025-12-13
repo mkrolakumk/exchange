@@ -49,7 +49,7 @@ async function processQueuePeriodically() {
     const processed = await operationsQueue.process();
     if (processed > 0) {
       await fetchBalance();
-      if (currentView === 'balance') {
+      if (appState.getView() === 'balance') {
         const userSection = document.getElementById('user-section');
         if (userSection) {
           renderBalanceView(userSection);

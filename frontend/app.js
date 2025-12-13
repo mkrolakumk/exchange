@@ -1,14 +1,12 @@
 async function logout() {
   await auth.clearToken();
-  currentView = 'home';
+  appState.setView('home');
   render();
 }
 
-let currentView = 'home';
-
 async function renderUserSection() {
   const userSection = document.getElementById('user-section');
-  const loggedIn = await auth.isLoggedIn();
+  const loggedIn = await appState.isLoggedIn();
 
   if (!loggedIn) {
     userSection.classList.add('hidden');
@@ -17,11 +15,12 @@ async function renderUserSection() {
 
   userSection.classList.remove('hidden');
 
-  if (currentView === 'balance') {
+  const view = appState.getView();
+  if (view === 'balance') {
     renderBalanceView(userSection);
-  } else if (currentView === 'notifications') {
+  } else if (view === 'notifications') {
     renderNotificationsView(userSection);
-  } else if (currentView === 'history') {
+  } else if (view === 'history') {
     renderHistoryView(userSection);
   } else {
     renderHomeView(userSection);
@@ -32,7 +31,7 @@ async function render() {
   await updateMenuState();
   await renderPrices();
   await renderUserSection();
-  await showView(currentView);
+  await showView(appState.getView());
 }
 
 async function updateStatus() {
@@ -75,7 +74,7 @@ async function init() {
   }, 1000);
 
   window.addEventListener('unauthorized', () => {
-    currentView = 'home';
+    appState.setView('home');
     render();
   });
 }

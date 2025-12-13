@@ -124,3 +124,24 @@ const preferences = {
     });
   },
 };
+
+const appState = {
+  currentView: 'home',
+
+  setView(view) {
+    this.currentView = view;
+  },
+
+  getView() {
+    return this.currentView;
+  },
+
+  async isOnline() {
+    const status = await backend.getStatus();
+    return status.isOnline;
+  },
+
+  async isLoggedIn() {
+    return await auth.isLoggedIn();
+  },
+};

@@ -45,28 +45,28 @@ function setupMenu() {
   homeBtn.addEventListener('click', (e) => {
     e.preventDefault();
     closeMenu();
-    currentView = 'home';
+    appState.setView('home');
     render();
   });
 
   balanceBtn.addEventListener('click', (e) => {
     e.preventDefault();
     closeMenu();
-    currentView = 'balance';
+    appState.setView('balance');
     render();
   });
 
   notificationsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     closeMenu();
-    currentView = 'notifications';
+    appState.setView('notifications');
     render();
   });
 
   historyBtn.addEventListener('click', (e) => {
     e.preventDefault();
     closeMenu();
-    currentView = 'history';
+    appState.setView('history');
     render();
   });
 
