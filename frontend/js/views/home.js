@@ -13,7 +13,7 @@ async function renderHomeView(container) {
   container.innerHTML = `
     ${notification}
     <div class="card">
-      <h2>Witaj, ${user?.first_name || 'Użytkowniku'}!</h2>
+      <h2>Witaj, <span class="username">${user?.first_name || 'Użytkowniku'}</span>!</h2>
       <p>Sprawdź aktualne kursy walut i dokonaj wymiany.</p>
     </div>
   `;

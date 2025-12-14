@@ -257,14 +257,14 @@ async function renderPrices() {
   const currentValue = searchInput?.value || searchQuery;
 
   const loginPrompt = !isLoggedIn
-    ? '<div class="login-prompt"><a href="#" id="login-link">Zaloguj się</a> lub <a href="#" id="register-link">utwórz konto</a>, aby korzystać z platformy Kantoru.</div>'
+    ? '<div class="login-prompt"><a href="#" id="login-link">Zaloguj się</a> lub <a href="#" id="register-link">utwórz konto,</a> aby korzystać w pełni z platformy Kantoru.</div>'
     : '';
 
   list.innerHTML = `
+    ${loginPrompt}
     <div class="search-container">
       <input type="text" id="currency-search" placeholder="Szukaj waluty po kodzie lub nazwie..." value="${currentValue}"/>
     </div>
-    ${loginPrompt}
     <div class="prices-table">
       ${merged
         .map(
@@ -301,6 +301,7 @@ async function renderPrices() {
             }
             <div class="price-expand">
               <span class="expand-icon">▼</span>
+              <span class="chart-hint">📊</span>
             </div>
           </div>
         </div>
