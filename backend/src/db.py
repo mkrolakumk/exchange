@@ -27,11 +27,20 @@ class PostgresDB:
             )
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
-        """Metoda do pobierania sesji bazy."""
+        """Metoda do pobierania sesji bazy zapewniającej spójność operacji w trakcie jej trwania -> jeżeli podczas sesji dojdzie do wyjątku, zostanie wykonany rollback."""
         if self._session_factory is None:
             await self.init()
-        async with self._session_factory() as session:
+
+        session = self._session_factory()
+        try:
             yield session
+        except Exception:
+            await session.rollback()
+            raise
+        else:
+            await session.commit()
+        finally:
+            await session.close()
 
     async def create_tables(self):
         """Stworzenie tabeli w bazie (w przypadku ich braku)."""
