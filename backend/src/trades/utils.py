@@ -13,30 +13,39 @@ from asyncio import sleep
 from typing import List
 from datetime import datetime
 
+
 async def buy_currency(user_id: int, currency_code: str, amount: float, session: AsyncSession) -> Trade:
     user = await session.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="Nie znaleziono użytkownika")
+        raise HTTPException(
+            status_code=404, detail="Nie znaleziono użytkownika")
     if amount <= 0:
-        raise HTTPException(status_code=400, detail="Kwota musi być większa niż 0")
+        raise HTTPException(
+            status_code=400, detail="Kwota musi być większa niż 0")
     if not await get_currency_by_code(currency_code, session):
         raise HTTPException(status_code=404, detail="Nie znaleziono waluty")
     user_balances = await get_user_balance(user_id, session)
-    user_balance_src: UserBalance | None = list(filter(lambda x: x.currency_code == "PLN", user_balances))
-    user_balance_dst: UserBalance | None = list(filter(lambda x: x.currency_code == currency_code, user_balances))
+    user_balance_src: UserBalance | None = list(
+        filter(lambda x: x.currency_code == "PLN", user_balances))
+    user_balance_dst: UserBalance | None = list(
+        filter(lambda x: x.currency_code == currency_code, user_balances))
     if not user_balance_src:
         raise HTTPException(status_code=400, detail="Brak środków w PLN")
     if not user_balance_dst:
-        raise HTTPException(status_code=400, detail=f"Błąd odczytu salda dla waluty {currency_code}")
+        raise HTTPException(
+            status_code=400, detail=f"Błąd odczytu salda dla waluty {currency_code}")
     balance = user_balance_src[0].balance
     curriences_prices = await get_list_of_currency_prices()
-    currency: Currency | None = list(filter(lambda x: x.currency_code == currency_code, curriences_prices))
+    currency: Currency | None = list(
+        filter(lambda x: x.currency_code == currency_code, curriences_prices))
     if not currency:
-        raise HTTPException(status_code=404, detail="Nie znaleziono ceny waluty")
+        raise HTTPException(
+            status_code=404, detail="Nie znaleziono ceny waluty")
     buy_value = currency[0].sell_price * amount
     if balance < buy_value:
         raise HTTPException(status_code=400, detail="Niewystarczające środki")
-    trade = Trade(user_id=user_id, currency_code=currency_code, amount=amount, exchange_rate=currency[0].sell_price, trade_type=TradeType.BUY)
+    trade = Trade(user_id=user_id, currency_code=currency_code, amount=amount,
+                  exchange_rate=currency[0].sell_price, trade_type=TradeType.BUY)
     session.add(trade)
 
     # Aktualizacja salda
@@ -50,32 +59,42 @@ async def buy_currency(user_id: int, currency_code: str, amount: float, session:
 
     return trade
 
+
 async def sell_currency(user_id: int, currency_code: str, amount: float, session: AsyncSession) -> Trade:
     user = await session.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="Nie znaleziono użytkownika")
+        raise HTTPException(
+            status_code=404, detail="Nie znaleziono użytkownika")
     if amount <= 0:
-        raise HTTPException(status_code=400, detail="Kwota musi być większa niż 0")
+        raise HTTPException(
+            status_code=400, detail="Kwota musi być większa niż 0")
     if not await get_currency_by_code(currency_code, session):
         raise HTTPException(status_code=404, detail="Nie znaleziono waluty")
     user_balances = await get_user_balance(user_id, session)
-    user_balance_src: UserBalance | None = list(filter(lambda x: x.currency_code == currency_code, user_balances))
-    user_balance_dst: UserBalance | None = list(filter(lambda x: x.currency_code == "PLN", user_balances))
+    user_balance_src: UserBalance | None = list(
+        filter(lambda x: x.currency_code == currency_code, user_balances))
+    user_balance_dst: UserBalance | None = list(
+        filter(lambda x: x.currency_code == "PLN", user_balances))
     if not user_balance_dst:
-        raise HTTPException(status_code=400, detail="Błąd odczytu salda dla waluty PLN")
+        raise HTTPException(
+            status_code=400, detail="Błąd odczytu salda dla waluty PLN")
     if not user_balance_src:
-        raise HTTPException(status_code=400, detail=f"Brak środków w {currency_code}")
+        raise HTTPException(
+            status_code=400, detail=f"Brak środków w {currency_code}")
 
     balance = user_balance_src[0].balance
     curriences_prices = await get_list_of_currency_prices()
-    currency: Currency | None = list(filter(lambda x: x.currency_code == currency_code, curriences_prices))
+    currency: Currency | None = list(
+        filter(lambda x: x.currency_code == currency_code, curriences_prices))
     if not currency:
-        raise HTTPException(status_code=404, detail="Nie znaleziono ceny waluty")
+        raise HTTPException(
+            status_code=404, detail="Nie znaleziono ceny waluty")
     sell_value = currency[0].buy_price * amount
     if balance < amount:
         raise HTTPException(status_code=400, detail="Niewystarczające środki")
-    
-    trade = Trade(user_id=user_id, currency_code=currency_code, amount=amount, exchange_rate=currency[0].buy_price, trade_type=TradeType.SELL)
+
+    trade = Trade(user_id=user_id, currency_code=currency_code, amount=amount,
+                  exchange_rate=currency[0].buy_price, trade_type=TradeType.SELL)
     session.add(trade)
 
     # Aktualizacja salda
@@ -89,11 +108,14 @@ async def sell_currency(user_id: int, currency_code: str, amount: float, session
 
     return trade
 
+
 async def get_user_trades(user_id: int, session: AsyncSession) -> List[Trade]:
     user = await session.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="Nie znaleziono użytkownika")
-    statement = select(Trade).where(Trade.user_id == user_id).order_by(Trade.timestamp.desc())
+        raise HTTPException(
+            status_code=404, detail="Nie znaleziono użytkownika")
+    statement = select(Trade).where(
+        Trade.user_id == user_id).order_by(Trade.timestamp.desc())
     results = await session.exec(statement)
     trades = results.all()
     return trades

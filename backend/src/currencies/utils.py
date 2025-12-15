@@ -9,6 +9,7 @@ from typing import List
 from src.db import pg_db
 import random
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import insert
 
 base_url = f"{config.currency_api.address}/exchangerates/"
 percent_margin: float = 0.01  # 1% marża
@@ -112,12 +113,12 @@ async def save_currencies_to_db(currencies: List[Currency]) -> None:
             currencies.append(
                 Currency(id="PLN", code="PLN", name="Polski Złoty"))
             for currency in currencies:
-                existing = await session.exec(
-                    select(Currency).where(Currency.code == currency.code)
-                )
-
-                if not existing.one_or_none():
-                    session.add(currency)
+                insert_stmt = insert(Currency).values(
+                    id=currency.id,
+                    code=currency.code,
+                    name=currency.name
+                ).on_conflict_do_nothing(index_elements=['id'])
+                await session.execute(insert_stmt)
 
             await session.commit()
         except Exception as _exc:

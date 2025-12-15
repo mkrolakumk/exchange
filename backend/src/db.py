@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from src.config import config
 from typing import AsyncGenerator
 
+
 class PostgresDB:
     """Singleton do zarządzania połączeniami z bazą PostgreSQL."""
     _instance = None
@@ -19,11 +20,11 @@ class PostgresDB:
     async def init(self):
         """Inicjalizacja silnika bazy i fabryki sesji."""
         if self._engine is None:
-            self._engine = create_async_engine(config.db.url, echo=False, future=True)
+            self._engine = create_async_engine(
+                config.db.url, echo=True, future=True)
             self._session_factory = sessionmaker(
                 self._engine, class_=AsyncSession, expire_on_commit=False
             )
-            await self.create_tables()
 
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """Metoda do pobierania sesji bazy."""
@@ -39,5 +40,6 @@ class PostgresDB:
 
         async with self._engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
+
 
 pg_db = PostgresDB()

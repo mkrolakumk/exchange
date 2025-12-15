@@ -26,6 +26,4 @@ COPY src/ ./src/
 # Ustawienie zmiennej środowiskowej PATH aby użyć pakietów z .venv (jest w /app/.venv)
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Uruchomienie aplikacji za pomocą gunicorna i uvicorn jako worker
-# Uruchomienie z katalogu /app, więc moduł to src.app:app
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.app:app", "--bind", "0.0.0.0:8000", "--workers", "4"]
+CMD ["sh", "-c", "python -m src.db_initializer && gunicorn -k uvicorn.workers.UvicornWorker src.app:app --bind 0.0.0.0:8000 --workers 4"]
