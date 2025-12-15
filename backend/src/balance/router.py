@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import Field
+from decimal import Decimal
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.currencies.utils import get_currency_by_code
 from src.balance.models import UserBalance
@@ -13,8 +14,11 @@ balance_router = APIRouter(prefix="/balance", tags=["balance"])
 
 
 @balance_router.post("/deposit", response_model=UserBalance)
-async def deposit_funds_by_user(amount: float, currency_code: str = "PLN", current_user: User = Depends(get_current_user), session: AsyncSession = Depends(pg_db.get_session)) -> UserBalance:
+async def deposit_funds_by_user(amount: Decimal, currency_code: str = "PLN", current_user: User = Depends(get_current_user), session: AsyncSession = Depends(pg_db.get_session)) -> UserBalance:
     """Endpoint do wpłacania środków na konto użytkownika. Domyślnie waluta to PLN, ale można wpłacić w dowolnej obsługiwanej walucie."""
+    if amount <= 0:
+        raise HTTPException(
+            status_code=400, detail="Kwota wpłaty musi być większa od zera.")
     currency = await get_currency_by_code(currency_code, session)
     if not currency:
         raise HTTPException(
@@ -23,8 +27,11 @@ async def deposit_funds_by_user(amount: float, currency_code: str = "PLN", curre
 
 
 @balance_router.post("/withdraw", response_model=UserBalance)
-async def withdraw_funds_by_user(amount: float, bank_account: str, currency_code: str, current_user: User = Depends(get_current_user), session: AsyncSession = Depends(pg_db.get_session)) -> UserBalance:
+async def withdraw_funds_by_user(amount: Decimal, bank_account: str, currency_code: str, current_user: User = Depends(get_current_user), session: AsyncSession = Depends(pg_db.get_session)) -> UserBalance:
     """Endpoint do wypłacania środków z konta użytkownika."""
+    if amount <= 0:
+        raise HTTPException(
+            status_code=400, detail="Kwota wypłaty musi być większa od zera.")
     response = await withdraw_funds(current_user.id, amount, currency_code, session)
     return response
 

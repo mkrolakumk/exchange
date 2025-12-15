@@ -1,6 +1,7 @@
 from src.users.models import User
 from fastapi import HTTPException
 from sqlmodel import select
+from decimal import Decimal
 from src.currencies.utils import get_currency_by_code, get_list_of_currency_prices
 from src.currencies.models import Currency
 from src.balance.utils import get_user_balance
@@ -14,7 +15,7 @@ from typing import List
 from datetime import datetime
 
 
-async def buy_currency(user_id: int, currency_code: str, amount: float, session: AsyncSession) -> Trade:
+async def buy_currency(user_id: int, currency_code: str, amount: Decimal, session: AsyncSession) -> Trade:
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(
@@ -60,7 +61,7 @@ async def buy_currency(user_id: int, currency_code: str, amount: float, session:
     return trade
 
 
-async def sell_currency(user_id: int, currency_code: str, amount: float, session: AsyncSession) -> Trade:
+async def sell_currency(user_id: int, currency_code: str, amount: Decimal, session: AsyncSession) -> Trade:
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(

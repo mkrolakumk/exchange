@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field
+from decimal import Decimal
 from sqlalchemy import Enum
 from typing import Optional
 from src.trades.enums import TradeType
@@ -13,9 +14,10 @@ class Trade(SQLModel, table=True):
                          description="Identyfikator użytkownika dokonującego transakcji")
     currency_code: str = Field(..., min_length=3, max_length=3,
                                foreign_key="currency.id", description="Kod waluty zgodny z ISO 4217")
-    exchange_rate: float = Field(
-        gt=0, description="Kurs wymiany waluty w momencie transakcji")
-    amount: float = Field(gt=0, description="Kwota transakcji")
+    exchange_rate: Decimal = Field(
+        gt=0, max_digits=24, decimal_places=10, description="Kurs wymiany waluty w momencie transakcji")
+    amount: Decimal = Field(gt=0, max_digits=24,
+                            decimal_places=10, description="Kwota transakcji")
     trade_type: TradeType = Field(sa_type=Enum(TradeType),
                                   description="Typ transakcji: kupno lub sprzedaż")
     timestamp: datetime = Field(

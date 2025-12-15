@@ -1,6 +1,7 @@
 from src.users.models import User
 from fastapi import HTTPException
 from sqlmodel import select
+from decimal import Decimal
 from src.currencies.utils import get_all_currencies
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db import pg_db
@@ -46,7 +47,7 @@ async def get_user_balance_by_currency_code(user_id: int, currency_code: str, se
     return balance
 
 
-async def deposit_funds(user_id: int, amount: float, currency_code: str, session: AsyncSession) -> UserBalance:
+async def deposit_funds(user_id: int, amount: Decimal, currency_code: str, session: AsyncSession) -> UserBalance:
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(
@@ -62,7 +63,7 @@ async def deposit_funds(user_id: int, amount: float, currency_code: str, session
     return balance
 
 
-async def withdraw_funds(user_id: int, amount: float, currency_code: str, session: AsyncSession) -> UserBalance:
+async def withdraw_funds(user_id: int, amount: Decimal, currency_code: str, session: AsyncSession) -> UserBalance:
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(
@@ -82,5 +83,5 @@ async def withdraw_funds(user_id: int, amount: float, currency_code: str, sessio
     session.add(balance)
     await session.commit()
     await session.refresh(balance)
-    await sleep(2)  # symulacja zlecenia przelewu
+    await sleep(2)  # symulacja zlecenia przelewu, poza transakcją bazy danych
     return balance

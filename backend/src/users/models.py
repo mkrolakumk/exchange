@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field
 from sqlalchemy import Column
+from decimal import Decimal
 from sqlalchemy.dialects.postgresql import JSONB
 from pydantic import EmailStr, BaseModel, Field as pydanticField
 from typing import Optional
@@ -29,7 +30,7 @@ class User(SQLModel, table=True):
 class Notification(BaseModel):
     currency_code: str = pydanticField(
         ..., description="Kod waluty, np. 'USD', 'EUR'")
-    threshold: float = pydanticField(
+    threshold: Decimal = pydanticField(
         ..., description="Próg wartości dla powiadomienia")
     direction: str = pydanticField(
         ..., description="Kierunek zmiany wartości: 'above' lub 'below'")

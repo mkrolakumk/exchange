@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 from src.config import config
+from decimal import Decimal
 from src.currencies.models import Currency, Price
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
@@ -12,29 +13,36 @@ from datetime import datetime
 from sqlalchemy.dialects.postgresql import insert
 
 base_url = f"{config.currency_api.address}/exchangerates/"
-percent_margin: float = 0.01  # 1% marża
+percent_margin: Decimal = Decimal("0.01")  # 1% marża
 
 
-def simulate_currency_fluctuation_from_mid(base_price: float) -> tuple[float, float]:
+def simulate_currency_fluctuation_from_mid(base_price: Decimal) -> tuple[Decimal, Decimal]:
     """Symuluje wahania cen walut. Zapewnia to, że ceny kupna i sprzedaży różnią się od ceny średniej oraz są niezerowe."""
-    fluctuation = random.uniform(-0.005, 0.005) * base_price
+    fluctuation_range = Decimal('0.01')
+    random_factor = Decimal(str(random.uniform(-0.5, 0.5)))
+    fluctuation = (random_factor * fluctuation_range *
+                   base_price).quantize(Decimal('0.00000001'))
+
     adjusted_mid = base_price + fluctuation
 
-    if base_price < 0.001:
+    if base_price < Decimal('0.001'):
         decimal_places = 8
     else:
         decimal_places = 4
 
-    buy_price = round(adjusted_mid * (1 - percent_margin), decimal_places)
-    sell_price = round(adjusted_mid * (1 + percent_margin), decimal_places)
+    buy_price = (adjusted_mid * (Decimal('1') - percent_margin)
+                 ).quantize(Decimal('1e-{}'.format(decimal_places)))
+    sell_price = (adjusted_mid * (Decimal('1') + percent_margin)
+                  ).quantize(Decimal('1e-{}'.format(decimal_places)))
 
-    buy_price = max(buy_price, 0.00000001)
-    sell_price = max(sell_price, 0.00000001)
+    min_price = Decimal('0.00000001')
+    buy_price = max(buy_price, min_price)
+    sell_price = max(sell_price, min_price)
 
     return buy_price, sell_price
 
 
-def simulate_currency_fluctuation_from_bid_ask(bid: float, ask: float) -> tuple[float, float]:
+def simulate_currency_fluctuation_from_bid_ask(bid: Decimal, ask: Decimal) -> tuple[Decimal, Decimal]:
     """Symuluje wahania cen walut na podstawie cen bid i ask."""
     mid_price = (bid + ask) / 2
     return simulate_currency_fluctuation_from_mid(mid_price)
@@ -74,14 +82,17 @@ async def get_list_of_currency_prices() -> List[Price]:
         seen_codes.add(code)
 
         if 'mid' in rate:
+            mid_decimal = Decimal(str(rate['mid']))
             buy_price, sell_price = simulate_currency_fluctuation_from_mid(
-                rate['mid'])
+                mid_decimal)
             price = Price(
                 currency_code=code, buy_price=buy_price, sell_price=sell_price)
             prices.append(price)
         elif 'bid' in rate and 'ask' in rate:
+            bid_decimal = Decimal(str(rate['bid']))
+            ask_decimal = Decimal(str(rate['ask']))
             buy_price, sell_price = simulate_currency_fluctuation_from_bid_ask(
-                rate['bid'], rate['ask'])
+                bid_decimal, ask_decimal)
             price = Price(
                 currency_code=code, buy_price=buy_price, sell_price=sell_price)
             prices.append(price)
@@ -168,8 +179,9 @@ async def fetch_historical_rates(currency_code: str, last_n: int) -> List[Price]
                         for rate in rates:
                             # Dla tabel A i B używamy 'mid'
                             if 'mid' in rate:
+                                mid_decimal = Decimal(str(rate['mid']))
                                 buy_price, sell_price = simulate_currency_fluctuation_from_mid(
-                                    rate['mid'])
+                                    mid_decimal)
                                 # Konwersja daty YYYY-MM-DD na datetime
                                 effective_date = datetime.strptime(
                                     rate.get('effectiveDate'), '%Y-%m-%d')
@@ -182,8 +194,10 @@ async def fetch_historical_rates(currency_code: str, last_n: int) -> List[Price]
                                 prices.append(price)
                             # Dla tabeli C używamy 'bid' i 'ask'
                             elif 'bid' in rate and 'ask' in rate:
+                                bid_decimal = Decimal(str(rate['bid']))
+                                ask_decimal = Decimal(str(rate['ask']))
                                 buy_price, sell_price = simulate_currency_fluctuation_from_bid_ask(
-                                    rate['bid'], rate['ask'])
+                                    bid_decimal, ask_decimal)
                                 # Konwersja daty YYYY-MM-DD na datetime
                                 effective_date = datetime.strptime(
                                     rate.get('effectiveDate'), '%Y-%m-%d')
