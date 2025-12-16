@@ -137,12 +137,11 @@ async def save_currencies_to_db(currencies: List[Currency]) -> None:
             raise _exc
 
 
-async def get_all_currencies() -> dict[str, Currency]:
-    async for session in pg_db.get_session():
-        statement = select(Currency)
-        result = await session.exec(statement)
-        currencies = {currency.id: currency for currency in result.all()}
-        return currencies
+async def get_all_currencies(session: AsyncSession) -> dict[str, Currency]:
+    statement = select(Currency)
+    result = await session.exec(statement)
+    currencies = {currency.id: currency for currency in result.all()}
+    return currencies
 
 
 async def get_currency_by_code(code: str, session: AsyncSession) -> Currency:

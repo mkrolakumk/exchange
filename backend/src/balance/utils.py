@@ -18,7 +18,7 @@ def verify_bank_account_number(account_number: str) -> bool:
 
 async def get_user_balance(user_id: int, session: AsyncSession) -> List[UserBalance]:
     # Pobranie wszystkich walut dostępnych
-    all_currencies = await get_all_currencies()
+    all_currencies = await get_all_currencies(session=session)
 
     statement = select(UserBalance).where(UserBalance.user_id == user_id)
     result = await session.exec(statement)

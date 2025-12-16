@@ -1,15 +1,17 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from src.currencies.models import Currency, Price
 from typing import List
 from src.currencies.utils import get_all_currencies, get_list_of_currency_prices, fetch_historical_rates
+from sqlmodel.ext.asyncio.session import AsyncSession
+from src.db import pg_db
 
 currency_router = APIRouter(prefix="/currencies", tags=["currencies"])
 
 
 @currency_router.get("/", response_model=dict[str, Currency])
-async def get_currencies() -> List[Currency]:
+async def get_currencies(session: AsyncSession = Depends(pg_db.get_session)) -> List[Currency]:
     """Funkcja pobiera listę walut z bazy danych."""
-    currencies = await get_all_currencies()
+    currencies = await get_all_currencies(session=session)
     if not currencies:
         raise HTTPException(
             status_code=503, detail="Nie udało się pobrać listy walut.")
