@@ -49,7 +49,7 @@ def simulate_currency_fluctuation_from_bid_ask(bid: Decimal, ask: Decimal) -> tu
 
 
 async def fetch_raw_currencies_from_api() -> List[dict]:
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=True)) as session:
         tasks = []
         for table in ['A', 'B', 'C']:
             url = f"{base_url}tables/{table}/?format=json"
