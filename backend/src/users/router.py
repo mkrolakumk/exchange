@@ -9,19 +9,23 @@ from src.db import pg_db
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 user_router = APIRouter(prefix="/users", tags=["users"])
 
+
 @user_router.get("/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)) -> User:
     """Funkcja zwraca dane aktualnie zalogowanego użytkownika."""
     return current_user
+
 
 @user_router.post("/register", response_model=User)
 async def register(user_data: UserCreate, session: AsyncSession = Depends(pg_db.get_session)) -> User:
     """Funkcja rejestruje nowego użytkownika w bazie danych."""
     user_by_email: User | None = await get_user_by_email(user_data.email, session)
     if user_by_email:
-        raise HTTPException(status_code=400, detail="Konto z tym adresem emailem już istnieje!")
+        raise HTTPException(
+            status_code=409, detail="Konto z tym adresem emailem już istnieje!")
 
     return await create_user_in_db(user_data, session)
+
 
 @user_router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(pg_db.get_session)):
