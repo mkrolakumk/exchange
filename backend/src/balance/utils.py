@@ -10,6 +10,12 @@ from asyncio import sleep
 from typing import List
 
 
+def verify_bank_account_number(account_number: str) -> bool:
+    if len(account_number) != 26 or not account_number.isdigit():
+        return False
+    return True
+
+
 async def get_user_balance(user_id: int, session: AsyncSession) -> List[UserBalance]:
     all_currencies = await get_all_currencies()
     balances = []

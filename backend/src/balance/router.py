@@ -4,6 +4,7 @@ from decimal import Decimal
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.currencies.utils import get_currency_by_code
 from src.balance.models import UserBalance
+from src.balance.utils import verify_bank_account_number
 from src.users.models import User
 from src.db import pg_db
 from src.balance.utils import deposit_funds, withdraw_funds, get_user_balance
@@ -32,6 +33,9 @@ async def withdraw_funds_by_user(amount: Decimal, bank_account: str, currency_co
     if amount <= 0:
         raise HTTPException(
             status_code=400, detail="Kwota wypłaty musi być większa od zera.")
+    if not verify_bank_account_number(bank_account):
+        raise HTTPException(
+            status_code=400, detail="Nieprawidłowy numer konta bankowego.")
     response = await withdraw_funds(current_user.id, amount, currency_code, session)
     return response
 
