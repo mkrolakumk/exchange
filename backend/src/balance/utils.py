@@ -17,24 +17,36 @@ def verify_bank_account_number(account_number: str) -> bool:
 
 
 async def get_user_balance(user_id: int, session: AsyncSession) -> List[UserBalance]:
+    # Pobranie wszystkich walut dostępnych
     all_currencies = await get_all_currencies()
-    balances = []
-    for currency in all_currencies.values():
-        statement = select(UserBalance).where(
-            (UserBalance.user_id == user_id) & (
-                UserBalance.currency_code == currency.code)
-        )
-        result = await session.exec(statement)
-        balance = result.first()
-        if not balance:
-            balance = UserBalance(
-                user_id=user_id, currency_code=currency.code, balance=0.0)
-            session.add(balance)
-            await session.commit()
+
+    statement = select(UserBalance).where(UserBalance.user_id == user_id)
+    result = await session.exec(statement)
+    existing_balances = {
+        balance.currency_code: balance for balance in result.all()}
+
+    missing_balances = []
+    for currency_code, currency in all_currencies.items():
+        if currency_code not in existing_balances:
+            missing_balances.append(UserBalance(
+                user_id=user_id,
+                currency_code=currency_code,
+                balance=0.0
+            ))
+
+    # Jeśli są jakieś sala, to trzeba je dodać do bazy
+    if missing_balances:
+        session.add_all(missing_balances)
+        await session.commit()
+        # Odświeżenie dodanych sald
+        for balance in missing_balances:
             await session.refresh(balance)
-        balances.append(balance)
-    balances.sort(key=lambda currency: currency.balance, reverse=True)
-    return balances
+
+    all_balances = list(existing_balances.values()) + missing_balances
+
+    # Sortowanie wyników malejąco, według salda
+    all_balances.sort(key=lambda b: b.balance, reverse=True)
+    return all_balances
 
 
 async def get_user_balance_by_currency_code(user_id: int, currency_code: str, session: AsyncSession) -> UserBalance:
