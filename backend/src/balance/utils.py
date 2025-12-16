@@ -101,5 +101,4 @@ async def withdraw_funds(user_id: int, amount: Decimal, currency_code: str, sess
     session.add(balance)
     await session.commit()
     await session.refresh(balance)
-    await sleep(2)  # symulacja zlecenia przelewu, poza transakcją bazy danych
     return balance

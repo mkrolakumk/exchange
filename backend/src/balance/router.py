@@ -9,7 +9,7 @@ from src.users.models import User
 from src.db import pg_db
 from src.balance.utils import deposit_funds, withdraw_funds, get_user_balance
 from src.users.utils import get_current_user
-from typing import List
+from asyncio import sleep
 
 balance_router = APIRouter(prefix="/balance", tags=["balance"])
 
@@ -37,6 +37,8 @@ async def withdraw_funds_by_user(amount: Decimal, bank_account: str, currency_co
         raise HTTPException(
             status_code=400, detail="Nieprawidłowy numer konta bankowego.")
     response = await withdraw_funds(current_user.id, amount, currency_code, session)
+    await session.close()
+    await sleep(2)  # symulacja zlecenia przelewu, poza transakcją bazy danych
     return response
 
 
