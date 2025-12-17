@@ -7,9 +7,10 @@ from src.currencies.models import Currency
 from src.balance.utils import get_user_balance
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db import pg_db
+from sqlalchemy import func
 from src.balance.models import UserBalance
 from src.trades.enums import TradeType
-from src.trades.models import Trade
+from src.trades.models import Trade, TradeResponse
 from asyncio import sleep
 from typing import List
 from datetime import datetime
@@ -110,13 +111,26 @@ async def sell_currency(user_id: int, currency_code: str, amount: Decimal, sessi
     return trade
 
 
-async def get_user_trades(user_id: int, session: AsyncSession) -> List[Trade]:
+async def get_user_trades(user_id: int, session: AsyncSession, page: int, page_size: int) -> TradeResponse:
     user = await session.get(User, user_id)
     if not user:
         raise HTTPException(
             status_code=404, detail="Nie znaleziono użytkownika")
+
+    offset = (page - 1) * page_size
+
+    count_statement = select(func.count()).where(Trade.user_id == user_id)
+    total_count = await session.scalar(count_statement)
+
     statement = select(Trade).where(
-        Trade.user_id == user_id).order_by(Trade.timestamp.desc())
+        Trade.user_id == user_id).order_by(Trade.timestamp.desc()).offset(offset).limit(page_size)
     results = await session.exec(statement)
     trades = results.all()
-    return trades
+    trades = [Trade.model_validate(trade) for trade in trades]
+
+    return TradeResponse(
+        trades=trades,
+        total=total_count,
+        page=page,
+        page_size=page_size
+    )

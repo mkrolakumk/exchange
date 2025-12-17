@@ -4,7 +4,7 @@ from sqlalchemy import Enum
 from typing import Optional
 from src.trades.enums import TradeType
 from datetime import datetime
-from pydantic import field_validator, field_serializer
+from pydantic import field_validator, field_serializer, BaseModel, Field as pydanticField
 
 
 class Trade(SQLModel, table=True):
@@ -39,3 +39,12 @@ class Trade(SQLModel, table=True):
     @field_serializer('trade_type')
     def serialize_trade_type(self, value):
         return value.value
+
+
+class TradeResponse(BaseModel):
+    trades: list[Trade] = pydanticField(
+        description="Lista transakcji użytkownika")
+    total: int = pydanticField(ge=0, description="Całkowita liczba transakcji")
+    page: int = pydanticField(ge=1, description="Aktualnie wybrana strona")
+    page_size: int = pydanticField(
+        ge=1, description="Liczba transakcji na stronę")
