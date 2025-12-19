@@ -4,6 +4,8 @@ export function setupMenu(onStateChange) {
   const overlay = document.getElementById("menu-overlay");
   const loginBtn = document.getElementById("menu-login");
   const registerBtn = document.getElementById("menu-register");
+  const homeBtn = document.getElementById("menu-home");
+  const balanceBtn = document.getElementById("menu-balance");
   const logoutBtn = document.getElementById("menu-logout");
 
   if (!menuBtn || !dropdown || !overlay) return;
@@ -43,6 +45,22 @@ export function setupMenu(onStateChange) {
     });
   }
 
+  if (homeBtn) {
+    homeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeMenu();
+      onStateChange("navigateHome");
+    });
+  }
+
+  if (balanceBtn) {
+    balanceBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeMenu();
+      onStateChange("navigateBalance");
+    });
+  }
+
   if (logoutBtn) {
     logoutBtn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -55,6 +73,8 @@ export function setupMenu(onStateChange) {
 export function updateMenuState(isLoggedIn) {
   const loginBtn = document.getElementById("menu-login");
   const registerBtn = document.getElementById("menu-register");
+  const homeBtn = document.getElementById("menu-home");
+  const balanceBtn = document.getElementById("menu-balance");
   const logoutBtn = document.getElementById("menu-logout");
 
   if (!loginBtn || !registerBtn || !logoutBtn) return;
@@ -62,10 +82,14 @@ export function updateMenuState(isLoggedIn) {
   if (isLoggedIn) {
     loginBtn.classList.add("hidden");
     registerBtn.classList.add("hidden");
+    if (homeBtn) homeBtn.classList.remove("hidden");
+    if (balanceBtn) balanceBtn.classList.remove("hidden");
     logoutBtn.classList.remove("hidden");
   } else {
     loginBtn.classList.remove("hidden");
     registerBtn.classList.remove("hidden");
+    if (homeBtn) homeBtn.classList.add("hidden");
+    if (balanceBtn) balanceBtn.classList.add("hidden");
     logoutBtn.classList.add("hidden");
   }
 }

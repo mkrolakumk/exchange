@@ -1,5 +1,6 @@
 import { createRouter } from "./router.js";
 import { createHomeView } from "./views/home.js";
+import { createBalanceView } from "./views/balance.js";
 import { state } from "./state.js";
 import { registerUser, loginUser, getUserMe } from "./utils/api.js";
 import { setupMenu, updateMenuState } from "./components/menu.js";
@@ -25,6 +26,7 @@ async function handleAuth(data) {
   await state.setUser(userData);
 
   updateMenuState(true);
+  router.navigate("home");
 }
 
 async function handleLogout() {
@@ -44,12 +46,17 @@ async function init() {
       authModal.show("login", handleAuth);
     } else if (action === "showRegister") {
       authModal.show("register", handleAuth);
+    } else if (action === "navigateHome") {
+      router.navigate("home");
+    } else if (action === "navigateBalance") {
+      router.navigate("balance");
     } else if (action === "logout") {
       handleLogout();
     }
   });
 
   router.register("home", createHomeView);
+  router.register("balance", createBalanceView);
   router.navigate("home");
 }
 

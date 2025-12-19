@@ -1,8 +1,4 @@
-import {
-  fetchCurrencies,
-  fetchPrices,
-  checkBackendStatus,
-} from "../utils/api.js";
+import { fetchCurrencies, fetchPrices, checkBackendStatus } from '../utils/api.js';
 
 export function createHomeView() {
   let container;
@@ -12,25 +8,25 @@ export function createHomeView() {
   let priceElements = [];
 
   function init() {
-    container = document.getElementById("app");
+    container = document.getElementById('app');
     abortController = new AbortController();
     loadInitialData();
     startPriceUpdates();
   }
 
   function render() {
-    container.innerHTML = "";
-    const title = document.createElement("h1");
-    title.textContent = "Pobrane waluty";
+    container.textContent = '';
+    const title = document.createElement('h1');
+    title.textContent = 'Pobrane waluty';
     container.appendChild(title);
 
-    const status = document.createElement("p");
-    status.id = "status";
-    status.textContent = "Sprawdzanie statusu...";
+    const status = document.createElement('p');
+    status.id = 'status';
+    status.textContent = 'Sprawdzanie statusu...';
     container.appendChild(status);
 
-    const list = document.createElement("ul");
-    list.id = "currency-list";
+    const list = document.createElement('ul');
+    list.id = 'currency-list';
     container.appendChild(list);
   }
 
@@ -51,8 +47,8 @@ export function createHomeView() {
       renderData(currencies, prices);
       checkStatus();
     } catch (error) {
-      console.error("Błąd:", error);
-      renderError("Nie udało się załadować danych");
+      console.error('Błąd:', error);
+      renderError('Nie udało się załadować danych');
     }
   }
 
@@ -62,26 +58,26 @@ export function createHomeView() {
         const prices = await fetchPrices();
         updatePrices(prices);
       } catch (error) {
-        console.error("Błąd aktualizacji cen:", error);
+        console.error('Błąd aktualizacji cen:', error);
       }
     }, 10000);
   }
 
   async function checkStatus() {
     const isOnline = await checkBackendStatus();
-    const status = isOnline ? "Backend online" : "Backend offline";
-    document.getElementById("status").textContent = status;
+    const status = isOnline ? 'Backend online' : 'Backend offline';
+    document.getElementById('status').textContent = status;
   }
 
   function renderData(currencies, prices) {
-    const list = document.getElementById("currency-list");
-    list.innerHTML = "";
+    const list = document.getElementById('currency-list');
+    list.textContent = '';
     priceElements = [];
     currencies.forEach((currency) => {
-      const item = document.createElement("li");
+      const item = document.createElement('li');
       const price = prices.find((p) => p.currency_code === currency.code);
-      const priceSpan = document.createElement("span");
-      priceSpan.textContent = price ? price.buy_price : "N/A";
+      const priceSpan = document.createElement('span');
+      priceSpan.textContent = price ? price.buy_price : 'N/A';
       item.textContent = `${currency.name} (${currency.code}): `;
       item.appendChild(priceSpan);
       list.appendChild(item);
@@ -93,13 +89,13 @@ export function createHomeView() {
     currencies.forEach((currency, index) => {
       const price = prices.find((p) => p.currency_code === currency.code);
       if (priceElements[index]) {
-        priceElements[index].textContent = price ? price.buy_price : "N/A";
+        priceElements[index].textContent = price ? price.buy_price : 'N/A';
       }
     });
   }
 
   function renderError(message) {
-    const error = document.createElement("p");
+    const error = document.createElement('p');
     error.textContent = message;
     container.appendChild(error);
   }
