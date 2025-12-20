@@ -1,4 +1,5 @@
 import { fetchCurrencies, fetchPrices, checkBackendStatus } from '../utils/api.js';
+import { state } from '../state.js';
 
 export function createHomeView() {
   let container;
@@ -44,6 +45,8 @@ export function createHomeView() {
       const currenciesObj = await fetchCurrencies();
       currencies = Object.values(currenciesObj);
       const prices = await fetchPrices();
+      await state.setCurrencies(currencies);
+      await state.setPrices(prices);
       renderData(currencies, prices);
       checkStatus();
     } catch (error) {
@@ -56,6 +59,7 @@ export function createHomeView() {
     priceInterval = setInterval(async () => {
       try {
         const prices = await fetchPrices();
+        await state.setPrices(prices);
         updatePrices(prices);
       } catch (error) {
         console.error('Błąd aktualizacji cen:', error);
