@@ -15,7 +15,7 @@ export async function registerUser(email, password, firstName, lastName) {
     const error = await response.json();
     throw new Error(error.detail || 'Błąd rejestracji');
   }
-  consolee.log('Użytkownik zarejestrowany pomyślnie!');
+  console.log('Użytkownik zarejestrowany pomyślnie!');
   return response.json();
 }
 
@@ -107,5 +107,14 @@ export async function withdrawBalance(token, currencyCode, amount, bankAccount) 
     throw new Error(error.detail || 'Błąd wypłaty');
   }
   console.log('Wypłata wykonana pomyślnie!');
+  return response.json();
+}
+
+export async function fetchTrades(token, page = 1) {
+  const response = await fetch(`${API_BASE}/trades/trades?page=${page}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Nie udało się pobrać historii transakcji');
+  console.log('Historia transakcji pobrana pomyślnie!');
   return response.json();
 }
