@@ -122,3 +122,43 @@ export async function fetchTrades(token, page = 1) {
   console.log('Historia transakcji pobrana pomyślnie!');
   return response.json();
 }
+
+export async function buyCurrency(token, currencyCode, amount) {
+  const response = await fetch(
+    `${API_BASE}/trades/buy?currency_code=${currencyCode}&amount=${amount}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Błąd kupna waluty');
+  }
+  await fetchBalance(token);
+  console.log('Waluta kupiona pomyślnie!');
+  return response.json();
+}
+
+export async function sellCurrency(token, currencyCode, amount) {
+  const response = await fetch(
+    `${API_BASE}/trades/sell?currency_code=${currencyCode}&amount=${amount}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Błąd sprzedaży waluty');
+  }
+  await fetchBalance(token);
+  console.log('Waluta sprzedana pomyślnie!');
+  return response.json();
+}

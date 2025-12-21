@@ -56,7 +56,11 @@ export const state = {
   },
 
   async getBalanceData() {
-    return (await getFromDB('balanceData')) || {};
+    try {
+      return await getFromDB('balanceData');
+    } catch (error) {
+      return {};
+    }
   },
 
   async setBalanceData(balanceData) {
@@ -65,6 +69,9 @@ export const state = {
 
   async getBalance(currencyCode) {
     const balanceData = await this.getBalanceData();
+    if (!balanceData || !balanceData[currencyCode]) {
+      return 0;
+    }
     return Number(balanceData[currencyCode].balance || 0);
   },
 };

@@ -8,6 +8,7 @@ export function createHomeView() {
   let priceInterval = null;
   let currencies = [];
   let priceElements = { buy: [], sell: [] };
+  let currencyRows = new Map();
 
   function init() {
     container = document.getElementById('app');
@@ -80,6 +81,7 @@ export function createHomeView() {
     const list = document.getElementById('currency-list');
     list.textContent = '';
     priceElements = { buy: [], sell: [] };
+    currencyRows.clear();
 
     const isLoggedIn = await state.isLoggedIn();
     if (isLoggedIn) {
@@ -96,16 +98,22 @@ export function createHomeView() {
         lp: index + 1,
         currencyCode: currency.code,
         currencyName: currency.name,
-        priceBuy: price?.buy_price,
-        previousPriceBuy: prevPrice?.buy_price,
-        priceSell: price?.sell_price,
-        previousPriceSell: prevPrice?.sell_price,
+        priceBuy: price?.sell_price,
+        previousPriceBuy: prevPrice?.sell_price,
+        priceSell: price?.buy_price,
+        previousPriceSell: prevPrice?.buy_price,
         isLoggedIn,
+        onTransactionComplete: async () => {
+          const token = await state.getToken();
+          await fetchBalance(token);
+          await row.updateBalance();
+        },
       });
 
       list.appendChild(row.element);
       priceElements.buy.push(row.buyPriceElement);
       priceElements.sell.push(row.sellPriceElement);
+      currencyRows.set(currency.code, row);
     }
   }
 
@@ -121,24 +129,24 @@ export function createHomeView() {
 
       if (priceElements.buy[index]) {
         priceElements.buy[index].textContent = price
-          ? `${Number(price.buy_price).toFixed(4)} PLN`
+          ? `${Number(price.sell_price).toFixed(4)} PLN`
           : 'N/A';
 
         priceElements.buy[index].className = 'price-amount';
         if (price && prevPrice) {
-          const buyChange = getChange(price.buy_price, prevPrice.buy_price);
+          const buyChange = getChange(price.sell_price, prevPrice.sell_price);
           priceElements.buy[index].classList.add(buyChange);
         }
       }
 
       if (priceElements.sell[index]) {
         priceElements.sell[index].textContent = price
-          ? `${Number(price.sell_price).toFixed(4)} PLN`
+          ? `${Number(price.buy_price).toFixed(4)} PLN`
           : 'N/A';
 
         priceElements.sell[index].className = 'price-amount';
         if (price && prevPrice) {
-          const sellChange = getChange(price.sell_price, prevPrice.sell_price);
+          const sellChange = getChange(price.buy_price, prevPrice.buy_price);
           priceElements.sell[index].classList.add(sellChange);
         }
       }
