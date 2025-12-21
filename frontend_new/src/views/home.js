@@ -9,6 +9,9 @@ export function createHomeView() {
   let currencies = [];
   let priceElements = { buy: [], sell: [] };
   let currencyRows = new Map();
+  let searchQuery = '';
+  let searchTimeout = null;
+  let wrappers = [];
 
   function init() {
     container = document.getElementById('app');
@@ -27,6 +30,20 @@ export function createHomeView() {
     status.id = 'status';
     status.textContent = 'Sprawdzanie statusu...';
     container.appendChild(status);
+
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'search-container';
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.id = 'currency-search';
+    searchInput.placeholder = 'Szukaj waluty po kodzie lub nazwie...';
+    searchInput.oninput = (e) => {
+      clearTimeout(searchTimeout);
+      searchQuery = e.target.value;
+      searchTimeout = setTimeout(filterList, 200);
+    };
+    searchContainer.appendChild(searchInput);
+    container.appendChild(searchContainer);
 
     const list = document.createElement('ul');
     list.id = 'currency-list';
@@ -82,6 +99,7 @@ export function createHomeView() {
     list.textContent = '';
     priceElements = { buy: [], sell: [] };
     currencyRows.clear();
+    wrappers = [];
 
     const isLoggedIn = await state.isLoggedIn();
     if (isLoggedIn) {
@@ -106,14 +124,26 @@ export function createHomeView() {
         onTransactionComplete: async () => {
           const token = await state.getToken();
           await fetchBalance(token);
-          await row.updateBalance();
+          const rowData = currencyRows.get(currency.code);
+          if (rowData) await rowData.row.updateBalance();
         },
       });
 
       list.appendChild(row.element);
       priceElements.buy.push(row.buyPriceElement);
       priceElements.sell.push(row.sellPriceElement);
-      currencyRows.set(currency.code, row);
+      currencyRows.set(currency.code, {
+        row,
+        searchCode: currency.code.toLowerCase(),
+        searchName: currency.name.toLowerCase(),
+      });
+      wrappers.push(row.element);
+    }
+
+    const searchInput = document.getElementById('currency-search');
+    if (searchInput && searchQuery) {
+      searchInput.value = searchQuery;
+      filterList();
     }
   }
 
@@ -151,6 +181,41 @@ export function createHomeView() {
         }
       }
     });
+  }
+
+  function filterList() {
+    const list = document.getElementById('currency-list');
+    if (!list) return;
+
+    let visible = 0;
+    const query = searchQuery.toLowerCase();
+
+    currencyRows.forEach((data, code) => {
+      const wrapper = data.row.element;
+
+      if (!searchQuery) {
+        wrapper.style.display = '';
+        visible++;
+        return;
+      }
+
+      if (data.searchCode.includes(query) || data.searchName.includes(query)) {
+        wrapper.style.display = '';
+        visible++;
+      } else {
+        wrapper.style.display = 'none';
+      }
+    });
+
+    const existing = list.parentNode.querySelector('.no-results');
+    if (existing) existing.remove();
+
+    if (visible === 0 && searchQuery) {
+      const msg = document.createElement('p');
+      msg.className = 'no-results';
+      msg.textContent = `Brak wyników dla "${searchQuery}"`;
+      list.parentNode.appendChild(msg);
+    }
   }
 
   return {

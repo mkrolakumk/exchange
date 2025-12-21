@@ -11,7 +11,7 @@ export function drawChart(canvas, data) {
 
   ctx.clearRect(0, 0, w, h);
 
-  const prices = data.map((d) => (d.buy_price + d.sell_price) / 2);
+  const prices = data.map((d) => (Number(d.buy_price) + Number(d.sell_price)) / 2);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
   const range = max - min || 1;

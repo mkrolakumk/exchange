@@ -162,3 +162,17 @@ export async function sellCurrency(token, currencyCode, amount) {
   console.log('Waluta sprzedana pomyślnie!');
   return response.json();
 }
+
+export async function fetchCurrencyHistory(currencyCode, days, signal) {
+  const response = await fetch(`${API_BASE}/currencies/history/${currencyCode}?n=${days}`, {
+    headers: { Accept: 'application/json' },
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error('Błąd pobierania danych historycznych');
+  }
+
+  console.log(`Historia ${currencyCode} pobrana pomyślnie!`);
+  return response.json();
+}
