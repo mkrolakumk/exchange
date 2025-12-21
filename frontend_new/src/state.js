@@ -54,4 +54,17 @@ export const state = {
   async setCurrencies(currencies) {
     await saveToDB('currencies', currencies);
   },
+
+  async getBalanceData() {
+    return (await getFromDB('balanceData')) || {};
+  },
+
+  async setBalanceData(balanceData) {
+    await saveToDB('balanceData', balanceData);
+  },
+
+  async getBalance(currencyCode) {
+    const balanceData = await this.getBalanceData();
+    return Number(balanceData[currencyCode].balance || 0);
+  },
 };

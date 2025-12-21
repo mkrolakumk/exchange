@@ -1,3 +1,5 @@
+import { state } from '../state.js';
+
 const API_BASE = 'http://localhost:8000';
 
 export async function registerUser(email, password, firstName, lastName) {
@@ -68,8 +70,10 @@ export async function fetchBalance(token) {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) throw new Error('Nie udało się pobrać salda');
-  console.log('Saldo pobrane pomyślnie!');
-  return response.json();
+  let balance = await response.json();
+  await state.setBalanceData(balance);
+  console.log('Saldo pobrane pomyślnie!', balance);
+  return balance;
 }
 
 export async function depositBalance(token, currencyCode, amount) {

@@ -645,6 +645,15 @@ button:disabled {
 }
 
 @media (max-width: 768px) {
+  .price-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .price-index {
+    display: none;
+  }
+
   .balance-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
@@ -677,4 +686,142 @@ button:disabled {
     order: -1;
     width: 100%;
   }
+}
+
+.chart-wrapper {
+  margin-top: 1rem;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chart-btn {
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chart-btn:hover:not(.active) {
+  background: var(--border);
+}
+
+.chart-btn.active {
+  background: var(--blue);
+  color: white;
+  border-color: var(--blue);
+}
+
+.chart-container {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  min-height: 300px;
+}
+
+.chart-container canvas {
+  display: block;
+  width: 100%;
+  height: 280px;
+}
+
+.chart-error {
+  padding: 1rem;
+  text-align: center;
+  color: var(--red);
+  font-size: 0.875rem;
+}
+
+#currency-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.price-wrapper {
+  position: relative;
+}
+
+.price-row {
+  display: grid;
+  grid-template-columns: 40px 2fr 1fr 1fr 120px;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.price-index {
+  font-weight: 700;
+  text-align: center;
+  color: var(--muted);
+}
+
+.price-currency {
+  display: flex;
+  flex-direction: column;
+}
+
+.currency-code {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.currency-name {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.price-value {
+  text-align: right;
+}
+
+.price-label {
+  font-size: 0.625rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.price-amount {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.price-amount.up {
+  color: var(--green);
+}
+
+.price-amount.down {
+  color: var(--red);
+}
+
+.price-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.btn-buy,
+.btn-sell {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.btn-buy {
+  background: var(--green);
+}
+
+.btn-sell {
+  background: var(--red);
 }
