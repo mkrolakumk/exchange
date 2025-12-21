@@ -44,7 +44,6 @@ export function drawChart(canvas, data) {
 
   ctx.stroke();
 
-  // Rysuj punkty na wykresie
   ctx.fillStyle = '#3b82f6';
   prices.forEach((price, i) => {
     const x = pad + ((w - pad * 2) / (prices.length - 1)) * i;
@@ -55,14 +54,6 @@ export function drawChart(canvas, data) {
   });
 }
 
-/**
- * Tworzy kontener z wykresem i kontrolkami do wyboru okresu
- * @param {string} code - Kod waluty
- * @param {Array} data - Dane historyczne
- * @param {number} activeDays - Aktywny okres (7, 30, 180)
- * @param {Function} onPeriodChange - Callback wywoływany przy zmianie okresu
- * @returns {HTMLElement} Element kontenera z wykresem
- */
 export function createChartContainer(code, data, activeDays = 7, onPeriodChange) {
   const container = document.createElement('div');
   container.className = 'chart-wrapper';
@@ -99,17 +90,11 @@ export function createChartContainer(code, data, activeDays = 7, onPeriodChange)
   container.appendChild(controls);
   container.appendChild(chartContainer);
 
-  // Rysuj wykres po dodaniu do DOM
   setTimeout(() => drawChart(canvas, data), 0);
 
   return container;
 }
 
-/**
- * Aktualizuje wykres nowymi danymi
- * @param {string} code - Kod waluty
- * @param {Array} data - Nowe dane historyczne
- */
 export function updateChart(code, data) {
   const canvas = document.getElementById(`chart-${code}`);
   if (canvas) {
@@ -117,11 +102,6 @@ export function updateChart(code, data) {
   }
 }
 
-/**
- * Tworzy komunikat o błędzie dla wykresu
- * @param {string} message - Treść komunikatu błędu
- * @returns {HTMLElement} Element z komunikatem błędu
- */
 export function createChartError(message) {
   const error = document.createElement('p');
   error.className = 'chart-error';
