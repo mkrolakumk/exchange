@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
+from decimal import Decimal
+import json
 from src.db import pg_db
 from src.users.models import User, UserPreferences, Notification
 from src.users.utils import get_current_user
@@ -66,7 +68,7 @@ async def set_dark_mode(
 async def get_notifications(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(pg_db.get_session)
-) -> list[Notification]:
+) -> list[dict]:
     result = await session.exec(
         select(UserPreferences).where(
             UserPreferences.user_id == current_user.id)
@@ -87,7 +89,7 @@ async def set_notifications(
     data: NotificationsUpdate,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(pg_db.get_session)
-) -> list[Notification]:
+) -> list[dict]:
     result = await session.exec(
         select(UserPreferences).where(
             UserPreferences.user_id == current_user.id)
@@ -100,7 +102,15 @@ async def set_notifications(
         await session.commit()
         await session.refresh(prefs)
 
-    prefs.alert_notifications = [n.model_dump() for n in data.notifications]
+    def serialize_notification(n: Notification) -> dict:
+        return {
+            'currency_code': n.currency_code,
+            'threshold': float(n.threshold) if isinstance(n.threshold, Decimal) else n.threshold,
+            'direction': n.direction
+        }
+
+    prefs.alert_notifications = [
+        serialize_notification(n) for n in data.notifications]
 
     session.add(prefs)
     await session.commit()
