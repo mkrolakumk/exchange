@@ -58,13 +58,13 @@ export function createHistoryView() {
           formatTradeData(trade, currenciesData)
         );
         renderTrades(formattedTrades);
+        isLoading = false;
         renderPagination(tradesData);
       }
     } catch (error) {
       console.error('Błąd ładowania historii:', error);
       clearContainer();
       renderError('Nie udało się załadować historii. Spróbuj ponownie później.');
-    } finally {
       isLoading = false;
     }
   }
@@ -186,6 +186,7 @@ export function createHistoryView() {
     const { page, page_size, total } = data;
     const fromItem = (page - 1) * page_size + 1;
     const toItem = Math.min(page * page_size, total);
+    const calculatedTotalPages = Math.ceil(total / page_size);
 
     const paginationDiv = document.createElement('div');
     paginationDiv.className = 'pagination';
@@ -193,7 +194,7 @@ export function createHistoryView() {
     const prevBtn = document.createElement('button');
     prevBtn.className = 'pagination-btn';
     prevBtn.textContent = '← Poprzednia';
-    prevBtn.disabled = page === 1 || isLoading;
+    prevBtn.disabled = page <= 1 || isLoading;
     prevBtn.onclick = () => loadPage(page - 1);
 
     const infoDiv = document.createElement('div');
@@ -201,7 +202,7 @@ export function createHistoryView() {
 
     const pageInfo = document.createElement('span');
     pageInfo.className = 'pagination-page';
-    pageInfo.textContent = `Strona ${page} z ${totalPages}`;
+    pageInfo.textContent = `Strona ${page} z ${calculatedTotalPages}`;
 
     const itemInfo = document.createElement('span');
     itemInfo.className = 'pagination-items';
@@ -213,7 +214,7 @@ export function createHistoryView() {
     const nextBtn = document.createElement('button');
     nextBtn.className = 'pagination-btn';
     nextBtn.textContent = 'Następna →';
-    nextBtn.disabled = page === totalPages || isLoading;
+    nextBtn.disabled = page >= calculatedTotalPages || isLoading;
     nextBtn.onclick = () => loadPage(page + 1);
 
     paginationDiv.appendChild(prevBtn);
