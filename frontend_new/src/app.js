@@ -2,10 +2,12 @@ import { createRouter } from './router.js';
 import { createHomeView } from './views/home.js';
 import { createBalanceView } from './views/balance.js';
 import { createHistoryView } from './views/history.js';
+import { createNotificationsView } from './views/notifications.js';
 import { state } from './state.js';
 import { registerUser, loginUser, getUserMe } from './utils/api.js';
 import { setupMenu, updateMenuState } from './components/menu.js';
 import { createAuthModal } from './components/modal.js';
+import { startNotificationMonitoring } from './utils/notifications.js';
 
 const router = createRouter();
 let authModal;
@@ -48,6 +50,8 @@ async function init() {
       router.navigate('balance');
     } else if (action === 'navigateHistory') {
       router.navigate('history');
+    } else if (action === 'navigateNotifications') {
+      router.navigate('notifications');
     } else if (action === 'logout') {
       handleLogout();
     }
@@ -56,7 +60,12 @@ async function init() {
   router.register('home', createHomeView);
   router.register('balance', createBalanceView);
   router.register('history', createHistoryView);
+  router.register('notifications', createNotificationsView);
   router.navigate('home');
+
+  if (isLoggedIn) {
+    startNotificationMonitoring();
+  }
 }
 
 init();

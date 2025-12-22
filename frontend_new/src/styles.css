@@ -975,3 +975,158 @@ button:disabled {
   transition: all 0.3s ease;
   font-weight: bold;
 }
+
+.notification-permission-banner {
+  background: var(--border);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.notification-permission-banner p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+}
+
+.notification-permission-banner .btn-primary {
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+}
+
+.permission-denied,
+.permission-unsupported {
+  color: var(--red);
+}
+
+.notifications-table {
+  margin-bottom: 1.5rem;
+}
+
+.notifications-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.notifications-table th {
+  text-align: left;
+  padding: 0.75rem;
+  background: var(--border);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.notifications-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.notifications-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.notification-form {
+  background: var(--border);
+  padding: 1.5rem;
+  border-radius: 6px;
+}
+
+.notification-form h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+}
+
+.notification-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.notification-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.notification-form input,
+.notification-form select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.notification-form input:focus,
+.notification-form select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.currency-select-wrapper {
+  position: relative;
+}
+
+.currency-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-top: 0.25rem;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.currency-dropdown.hidden {
+  display: none;
+}
+
+.dropdown-item {
+  padding: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.dropdown-item:hover {
+  background: var(--border);
+}
+
+.dropdown-code {
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.dropdown-name {
+  color: var(--muted);
+}
+
+.dropdown-empty {
+  padding: 0.75rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.btn-delete {
+  padding: 0.5rem 1rem;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: opacity 0.2s;
+}
+
+.btn-delete:hover {
+  opacity: 0.8;
+}

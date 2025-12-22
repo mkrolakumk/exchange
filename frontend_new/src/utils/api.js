@@ -176,3 +176,32 @@ export async function fetchCurrencyHistory(currencyCode, days, signal) {
   console.log(`Historia ${currencyCode} pobrana pomyślnie!`);
   return response.json();
 }
+
+export async function fetchNotifications(token) {
+  const response = await fetch(`${API_BASE}/users/preferences/notifications`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+  if (!response.ok) throw new Error('Nie udało się pobrać powiadomień');
+  console.log('Powiadomienia pobrane pomyślnie!');
+  return response.json();
+}
+
+export async function updateNotifications(token, notifications) {
+  const response = await fetch(`${API_BASE}/users/preferences/notifications`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ notifications }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Błąd zapisywania powiadomień');
+  }
+  console.log('Powiadomienia zapisane pomyślnie!');
+  return response.json();
+}

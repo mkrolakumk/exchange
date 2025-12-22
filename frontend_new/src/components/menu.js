@@ -7,6 +7,7 @@ export function setupMenu(onStateChange) {
   const homeBtn = document.getElementById('menu-home');
   const balanceBtn = document.getElementById('menu-balance');
   const historyBtn = document.getElementById('menu-history');
+  const notificationsBtn = document.getElementById('menu-notifications');
   const logoutBtn = document.getElementById('menu-logout');
 
   if (!menuBtn || !dropdown || !overlay) return;
@@ -70,6 +71,14 @@ export function setupMenu(onStateChange) {
     });
   }
 
+  if (notificationsBtn) {
+    notificationsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeMenu();
+      onStateChange('navigateNotifications');
+    });
+  }
+
   if (logoutBtn) {
     logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -85,6 +94,7 @@ export function updateMenuState(isLoggedIn) {
   const homeBtn = document.getElementById('menu-home');
   const balanceBtn = document.getElementById('menu-balance');
   const historyBtn = document.getElementById('menu-history');
+  const notificationsBtn = document.getElementById('menu-notifications');
   const logoutBtn = document.getElementById('menu-logout');
 
   if (!loginBtn || !registerBtn || !logoutBtn) return;
@@ -95,6 +105,7 @@ export function updateMenuState(isLoggedIn) {
     if (homeBtn) homeBtn.classList.remove('hidden');
     if (balanceBtn) balanceBtn.classList.remove('hidden');
     if (historyBtn) historyBtn.classList.remove('hidden');
+    if (notificationsBtn) notificationsBtn.classList.remove('hidden');
     logoutBtn.classList.remove('hidden');
   } else {
     loginBtn.classList.remove('hidden');
@@ -102,6 +113,7 @@ export function updateMenuState(isLoggedIn) {
     if (homeBtn) homeBtn.classList.add('hidden');
     if (balanceBtn) balanceBtn.classList.add('hidden');
     if (historyBtn) historyBtn.classList.add('hidden');
+    if (notificationsBtn) notificationsBtn.classList.add('hidden');
     logoutBtn.classList.add('hidden');
   }
 }
