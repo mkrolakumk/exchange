@@ -205,3 +205,14 @@ export async function updateNotifications(token, notifications) {
   console.log('Powiadomienia zapisane pomyślnie!');
   return response.json();
 }
+
+export async function detectCurrency(latitude, longitude) {
+  const response = await fetch(`${API_BASE}/geolocation/detect-currency`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latitude, longitude }),
+  });
+  if (!response.ok) throw new Error('Błąd wykrywania waluty');
+  console.log('Waluta wykryta pomyślnie!');
+  return response.json();
+}

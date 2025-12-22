@@ -1130,3 +1130,89 @@ button:disabled {
 .btn-delete:hover {
   opacity: 0.8;
 }
+
+.currency-notification {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--blue);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 320px;
+  min-width: 280px;
+}
+
+.currency-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.currency-notification-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.currency-notification-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.currency-notification-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.currency-notification-currency {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.currency-notification-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.currency-notification-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .currency-notification {
+    right: 16px;
+    left: 16px;
+    max-width: none;
+    min-width: auto;
+  }
+}

@@ -1,6 +1,7 @@
 import { fetchCurrencies, fetchPrices, checkBackendStatus, fetchBalance } from '../utils/api.js';
 import { state } from '../state.js';
 import { createCurrencyRow } from '../components/currencyRow.js';
+import { checkAndUpdateLocalCurrency } from '../utils/geolocation.js';
 
 export function createHomeView() {
   let container;
@@ -18,6 +19,7 @@ export function createHomeView() {
     abortController = new AbortController();
     loadInitialData();
     startPriceUpdates();
+    checkAndUpdateLocalCurrency();
   }
 
   function render() {

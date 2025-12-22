@@ -1,5 +1,6 @@
 import { state } from '../state.js';
 import { createConfirmDialog } from '../components/confirm.js';
+import { getLocalCurrency } from '../utils/geolocation.js';
 import {
   fetchCurrencies,
   fetchBalance as apiFetchBalance,
@@ -35,7 +36,7 @@ export function createBalanceView() {
         fetchCurrencies(),
       ]);
 
-      const currencies = prepareDisplayCurrencies(balanceData, currenciesData);
+      const currencies = await prepareDisplayCurrencies(balanceData, currenciesData);
       renderBalanceView(currencies, balanceData);
     } catch (error) {
       console.error('Błąd ładowania danych:', error);
@@ -52,8 +53,8 @@ export function createBalanceView() {
     clearContainer();
   }
 
-  function prepareDisplayCurrencies(balanceData, currenciesData) {
-    const preferredCurrency = 'PLN'; // będzie z geolokalizacji
+  async function prepareDisplayCurrencies(balanceData, currenciesData) {
+    const preferredCurrency = await getLocalCurrency();
     const preferredSet = new Set([preferredCurrency, 'USD', 'EUR', 'GBP', 'CHF']);
 
     Object.entries(balanceData).forEach(([code, data]) => {

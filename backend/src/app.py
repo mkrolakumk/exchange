@@ -5,6 +5,7 @@ from src.users.preferences import router as preferences_router
 from src.currencies.router import currency_router
 from src.balance.router import balance_router
 from src.trades.router import trade_router
+from src.geolocation.router import geolocation_router
 from src.currencies.utils import fetch_list_of_currencies
 from fastapi.middleware.cors import CORSMiddleware
 from src.db import pg_db
@@ -44,6 +45,7 @@ app.include_router(preferences_router)
 app.include_router(currency_router)
 app.include_router(balance_router)
 app.include_router(trade_router)
+app.include_router(geolocation_router)
 app.add_event_handler("startup", startup_fetch_currencies)
 
 
