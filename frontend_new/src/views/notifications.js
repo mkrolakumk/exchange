@@ -1,10 +1,12 @@
 import { state } from '../state.js';
 import { fetchNotifications, updateNotifications, fetchCurrencies } from '../utils/api.js';
+import { createConfirmDialog } from '../components/confirm.js';
 
 export function createNotificationsView() {
   let container = null;
   let selectedCurrency = null;
   let currencyList = [];
+  const confirmDialog = createConfirmDialog();
 
   async function init() {
     container = document.querySelector('#app');
@@ -325,7 +327,7 @@ export function createNotificationsView() {
 
   async function handleAddNotification(notifications) {
     if (!selectedCurrency) {
-      alert('Wybierz walutę z listy');
+      await confirmDialog.alert('Błąd', 'Wybierz walutę z listy');
       return;
     }
 
@@ -343,7 +345,7 @@ export function createNotificationsView() {
       await updateNotifications(token, notifications);
       selectedCurrency = null;
     } catch (err) {
-      alert('Błąd podczas dodawania powiadomienia: ' + err.message);
+      await confirmDialog.alert('Błąd', 'Błąd podczas dodawania powiadomienia: ' + err.message);
     }
   }
 
@@ -353,7 +355,7 @@ export function createNotificationsView() {
     try {
       await updateNotifications(token, notifications);
     } catch (err) {
-      alert('Błąd podczas usuwania powiadomienia: ' + err.message);
+      await confirmDialog.alert('Błąd', 'Błąd podczas usuwania powiadomienia: ' + err.message);
     }
   }
 
