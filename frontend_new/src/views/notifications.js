@@ -31,7 +31,7 @@ export function createNotificationsView() {
     const notificationsTable = renderNotificationsTable(notifications, currenciesData);
     const notificationForm = renderNotificationForm();
 
-    container.innerHTML = '';
+    container.textContent = '';
     const card = document.createElement('div');
     card.className = 'card';
 
@@ -272,7 +272,7 @@ export function createNotificationsView() {
         return c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
       });
 
-      dropdown.innerHTML = '';
+      dropdown.textContent = '';
 
       if (filtered.length === 0) {
         const empty = document.createElement('div');
@@ -366,7 +366,7 @@ export function createNotificationsView() {
 
   function destroy() {
     if (container) {
-      container.innerHTML = '';
+      container.textContent = '';
     }
   }
 

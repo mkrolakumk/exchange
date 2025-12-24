@@ -68,7 +68,7 @@ export async function getLocalCurrency() {
 function showCurrencyNotification(currency) {
   const notification = document.createElement('div');
   notification.className = 'currency-notification';
-  notification.innerHTML = `
+  notification.textContent = `
     <div class="currency-notification-content">
       <span class="currency-notification-icon">🌍</span>
       <div class="currency-notification-text">
