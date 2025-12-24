@@ -1216,3 +1216,75 @@ button:disabled {
     min-width: auto;
   }
 }
+
+.install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding: 1rem;
+}
+
+.install-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.install-icon {
+  font-size: 2rem;
+}
+
+.install-text {
+  flex: 1;
+}
+
+.install-text strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.install-text span {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.install-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.install-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+}
+
+.install-btn-primary {
+  background: var(--blue);
+  color: white;
+}
+
+.install-btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .install-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .install-btn {
+    flex: 1;
+  }
+}

@@ -8,6 +8,7 @@ import { registerUser, loginUser, getUserMe } from './utils/api.js';
 import { setupMenu, updateMenuState } from './components/menu.js';
 import { createAuthModal } from './components/modal.js';
 import { startNotificationMonitoring } from './utils/notifications.js';
+import { install } from './utils/install.js';
 
 const router = createRouter();
 let authModal;
@@ -66,6 +67,8 @@ async function init() {
   if (isLoggedIn) {
     startNotificationMonitoring();
   }
+
+  install.init();
 }
 
 init();
