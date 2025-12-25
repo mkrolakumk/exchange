@@ -9,6 +9,7 @@ import { setupMenu, updateMenuState } from './components/menu.js';
 import { createAuthModal } from './components/modal.js';
 import { startNotificationMonitoring } from './utils/notifications.js';
 import { install } from './utils/install.js';
+import { onboarding } from './utils/onboarding.js';
 
 const router = createRouter();
 let authModal;
@@ -69,6 +70,10 @@ async function init() {
   }
 
   install.init();
+
+  setTimeout(() => {
+    onboarding.start();
+  }, 1000);
 }
 
 init();

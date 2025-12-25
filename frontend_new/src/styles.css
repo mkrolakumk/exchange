@@ -1288,3 +1288,63 @@ button:disabled {
     flex: 1;
   }
 }
+
+.onboarding-tooltip {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  border: 2px solid var(--blue);
+  border-radius: 6px;
+  padding: 1.5rem;
+  max-width: 400px;
+  z-index: 200;
+}
+
+.tooltip-content {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.tooltip-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.tooltip-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.tooltip-btn-primary {
+  background: var(--blue);
+  color: white;
+  border-color: var(--blue);
+}
+
+.onboarding-highlight {
+  position: relative;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  border-radius: 6px;
+  z-index: 150;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
