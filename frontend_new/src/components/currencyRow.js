@@ -259,11 +259,11 @@ export async function createCurrencyRow({
       if (!data) return;
 
       if (data.error || data.length === 0) {
-        canvasContainer.innerHTML = '<p class="chart-error">Brak danych dla wybranego okresu</p>';
+        canvasContainer.textContent = 'Brak danych dla wybranego okresu';
         return;
       }
 
-      canvasContainer.innerHTML = '';
+      canvasContainer.textContent = '';
       const canvas = document.createElement('canvas');
       canvas.id = `chart-${currencyCode}`;
       canvasContainer.appendChild(canvas);
@@ -271,7 +271,7 @@ export async function createCurrencyRow({
       drawChart(canvas, data);
     } catch (error) {
       console.error('Błąd ładowania wykresu:', error);
-      canvasContainer.innerHTML = '<p class="chart-error">Błąd ładowania danych</p>';
+      canvasContainer.textContent = 'Błąd ładowania danych';
     }
   }
 
