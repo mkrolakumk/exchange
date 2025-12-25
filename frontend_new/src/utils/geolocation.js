@@ -68,21 +68,39 @@ export async function getLocalCurrency() {
 function showCurrencyNotification(currency) {
   const notification = document.createElement('div');
   notification.className = 'currency-notification';
-  notification.textContent = `
-    <div class="currency-notification-content">
-      <span class="currency-notification-icon">🌍</span>
-      <div class="currency-notification-text">
-        <div class="currency-notification-title">Wykryto lokalną walutę</div>
-        <div class="currency-notification-currency">${currency}</div>
-      </div>
-      <button class="currency-notification-close" aria-label="Zamknij">×</button>
-    </div>
-  `;
+
+  const content = document.createElement('div');
+  content.className = 'currency-notification-content';
+
+  const icon = document.createElement('div');
+  icon.className = 'currency-notification-icon';
+  icon.textContent = '🌍';
+
+  const textContainer = document.createElement('div');
+  textContainer.className = 'currency-notification-text';
+
+  const title = document.createElement('div');
+  title.className = 'currency-notification-title';
+  title.textContent = 'Wykryto nową lokalizację';
+
+  const currencyCode = document.createElement('div');
+  currencyCode.className = 'currency-notification-currency';
+  currencyCode.textContent = currency;
+
+  textContainer.appendChild(title);
+  textContainer.appendChild(currencyCode);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'currency-notification-close';
+  closeBtn.textContent = '×';
+  closeBtn.onclick = () => notification.remove();
+
+  content.appendChild(icon);
+  content.appendChild(textContainer);
+  content.appendChild(closeBtn);
+  notification.appendChild(content);
 
   document.body.appendChild(notification);
-
-  const closeBtn = notification.querySelector('.currency-notification-close');
-  closeBtn.onclick = () => notification.remove();
 
   setTimeout(() => {
     if (notification.parentNode) {

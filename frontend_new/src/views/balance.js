@@ -6,7 +6,9 @@ import {
   fetchBalance as apiFetchBalance,
   depositBalance as apiDepositBalance,
   withdrawBalance as apiWithdrawBalance,
+  backendStatus,
 } from '../utils/api.js';
+import { operationsQueue } from '../utils/queue.js';
 
 export function createBalanceView() {
   let container = null;
@@ -134,6 +136,17 @@ export function createBalanceView() {
 
     if (amountStr === null) return;
 
+    const status = await backendStatus.getStatus();
+
+    if (!status.isOnline) {
+      await operationsQueue.add('deposit', currency, amountStr);
+      await confirmDialog.alert(
+        'Tryb offline',
+        `Operacja wpłaty ${amountStr} ${currency} zostanie wykonana po powrocie połączenia.`
+      );
+      return;
+    }
+
     try {
       const token = await state.getToken();
       await apiDepositBalance(token, currency, amountStr);
@@ -186,6 +199,17 @@ export function createBalanceView() {
     );
 
     if (bankAccount === null) return;
+
+    const status = await backendStatus.getStatus();
+
+    if (!status.isOnline) {
+      await operationsQueue.add('withdraw', currency, amountStr, bankAccount);
+      await confirmDialog.alert(
+        'Tryb offline',
+        `Operacja wypłaty ${amountStr} ${currency} zostanie wykonana po powrocie połączenia.`
+      );
+      return;
+    }
 
     try {
       const token = await state.getToken();

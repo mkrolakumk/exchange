@@ -94,17 +94,3 @@ export function createChartContainer(code, data, activeDays = 7, onPeriodChange)
 
   return container;
 }
-
-export function updateChart(code, data) {
-  const canvas = document.getElementById(`chart-${code}`);
-  if (canvas) {
-    drawChart(canvas, data);
-  }
-}
-
-export function createChartError(message) {
-  const error = document.createElement('p');
-  error.className = 'chart-error';
-  error.textContent = message;
-  return error;
-}

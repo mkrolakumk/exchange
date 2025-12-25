@@ -1,3 +1,5 @@
+import { backendStatus } from '../utils/api.js';
+
 export function createAuthModal() {
   const modal = document.getElementById('auth-modal');
   const closeBtn = modal.querySelector('.close');
@@ -70,6 +72,12 @@ export function createAuthModal() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const status = await backendStatus.getStatus();
+    if (!status.isOnline) {
+      showError('Brak połączenia z serwerem. Spróbuj ponownie później.');
+      return;
+    }
 
     const email = emailInput.value.trim();
     const password = passwordInput.value;

@@ -1,4 +1,10 @@
-import { fetchCurrencies, fetchPrices, checkBackendStatus, fetchBalance } from '../utils/api.js';
+import {
+  fetchCurrencies,
+  fetchPrices,
+  checkBackendStatus,
+  fetchBalance,
+  backendStatus,
+} from '../utils/api.js';
 import { state } from '../state.js';
 import { createCurrencyRow } from '../components/currencyRow.js';
 import { checkAndUpdateLocalCurrency } from '../utils/geolocation.js';
@@ -73,13 +79,21 @@ export function createHomeView() {
       checkStatus();
     } catch (error) {
       console.error('Błąd:', error);
-      renderError('Nie udało się załadować danych');
+      const message = error.isNetworkError
+        ? 'Brak połączenia z serwerem. Sprawdź połączenie internetowe.'
+        : 'Nie udało się załadować danych';
+      renderError(message);
     }
   }
 
   function startPriceUpdates() {
     priceInterval = setInterval(async () => {
       try {
+        if (currencies.length === 0) {
+          await loadInitialData();
+          return;
+        }
+
         const prices = await fetchPrices();
         const previousPrices = (await state.getPreviousPrices()) || [];
         await state.setPrices(prices);
@@ -91,9 +105,13 @@ export function createHomeView() {
   }
 
   async function checkStatus() {
-    const isOnline = await checkBackendStatus();
-    const status = isOnline ? 'Backend online' : 'Backend offline';
-    document.getElementById('status').textContent = status;
+    await checkBackendStatus();
+    const status = await backendStatus.getStatus();
+    const statusText = status.isOnline ? 'Online' : 'Offline';
+    const statusEl = document.getElementById('status');
+    if (statusEl) {
+      statusEl.textContent = statusText;
+    }
   }
 
   async function renderData(currencies, prices, previousPrices = []) {

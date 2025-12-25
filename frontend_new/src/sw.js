@@ -1,64 +1,118 @@
-// Stałe aplikacji
-const VERSION = "v1";
+const VERSION = 'v1';
 const CACHE_NAME = `exchange-${VERSION}`;
-const APP_ASSETS = ["/", "/index.html", "/src"];
+const STATIC_CACHE = `static-${VERSION}`;
+const DYNAMIC_CACHE = `dynamic-${VERSION}`;
 
-// Instalacja Service Workera i cache'owanie zasobów aplikacji
-self.addEventListener("install", (event) => {
+const STATIC_ASSETS = [
+  './',
+  './index.html',
+  './src/styles.css',
+  './src/app.js',
+  './src/router.js',
+  './src/state.js',
+  './src/components/menu.js',
+  './src/components/modal.js',
+  './src/components/confirm.js',
+  './src/components/currencyRow.js',
+  './src/views/home.js',
+  './src/views/balance.js',
+  './src/views/history.js',
+  './src/views/notifications.js',
+  './src/utils/api.js',
+  './src/utils/db.js',
+  './src/utils/queue.js',
+  './src/utils/geolocation.js',
+  './src/utils/install.js',
+  './src/utils/notifications.js',
+  './src/utils/onboarding.js',
+  './src/utils/chart.js',
+  './manifest.json',
+];
+
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_ASSETS);
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
     })
   );
-
   self.skipWaiting();
 });
 
-// Aktywacja Service Workera i usuwanie starych cache'y
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
-      Promise.all(
+      return Promise.all(
         keys
-          .filter((key) => key.startsWith("exchange") && key !== CACHE_NAME)
+          .filter(
+            (key) => key.startsWith('exchange') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE
+          )
           .map((key) => caches.delete(key))
       );
     })
   );
-
-  self.clients.claim();
+  return self.clients.claim();
 });
 
-// Obsługa żądań sieciowych i serwowanie zasobów z cache'a
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches
-      .match(event.request)
-      .then((response) => {
-        return response || fetch(event.request);
-      })
-      .catch((err) => {
-        console.error("Błąd zapytania fetch: ", err);
-      })
-  );
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (url.origin === location.origin) {
+    event.respondWith(
+      caches
+        .match(request)
+        .then((cachedResponse) => {
+          return (
+            cachedResponse ||
+            fetch(request).then((networkResponse) => {
+              return caches.open(DYNAMIC_CACHE).then((cache) => {
+                cache.put(request, networkResponse.clone());
+                return networkResponse;
+              });
+            })
+          );
+        })
+        .catch(() => {
+          if (request.destination === 'document') {
+            return caches.match('./index.html');
+          }
+        })
+    );
+  } else {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (request.method === 'GET') {
+            return caches.open(DYNAMIC_CACHE).then((cache) => {
+              cache.put(request, response.clone());
+              return response;
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request);
+        })
+    );
+  }
 });
 
 // Obsługa kliknięć w powiadomienia push
-self.addEventListener("notificationclick", (event) => {
-  console.log("Kliknięto powiadomienie:", event.notification.title);
+self.addEventListener('notificationclick', (event) => {
+  console.log('Kliknięto powiadomienie:', event.notification.title);
   event.notification.close();
 
   event.waitUntil(
-    clients.matchAll({ type: "window" }).then((clientList) => {
+    clients.matchAll({ type: 'window' }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url === self.location.origin + "/" && "focus" in client) {
-          console.log("Fokus na istniejącą kartę");
+        if (client.url === self.location.origin + '/' && 'focus' in client) {
+          console.log('Fokus na istniejącą kartę');
           return client.focus();
         }
       }
-      console.log("Otwieranie nowej karty");
+      console.log('Otwieranie nowej karty');
       if (clients.openWindow) {
-        return clients.openWindow("/");
+        return clients.openWindow('/');
       }
     })
   );
