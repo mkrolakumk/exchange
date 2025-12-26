@@ -15,7 +15,7 @@ export const operationsQueue = {
     await saveToDB('pending_operations', operations);
   },
 
-  async process(token) {
+  async process() {
     const operations = (await getFromDB('pending_operations')) || [];
     if (!operations.length) return 0;
 
@@ -23,9 +23,9 @@ export const operationsQueue = {
     for (const op of operations) {
       try {
         if (op.type === 'deposit') {
-          await depositBalance(token, op.currency, op.amount);
+          await depositBalance(op.currency, op.amount);
         } else {
-          await withdrawBalance(token, op.currency, op.amount, op.bankAccount);
+          await withdrawBalance(op.currency, op.amount, op.bankAccount);
         }
         processed.push(op.id);
       } catch {}

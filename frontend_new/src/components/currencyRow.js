@@ -155,8 +155,7 @@ export async function createCurrencyRow({
       if (amountStr === null) return;
 
       try {
-        const token = await state.getToken();
-        await buyCurrency(token, currencyCode, amountStr);
+        await buyCurrency(currencyCode, amountStr);
         await confirmDialog.alert('Sukces', `Kupiono ${amountStr} ${currencyCode}`);
         if (onTransactionComplete) {
           await onTransactionComplete();
@@ -208,8 +207,7 @@ export async function createCurrencyRow({
         if (amountStr === null) return;
 
         try {
-          const token = await state.getToken();
-          await sellCurrency(token, currencyCode, amountStr);
+          await sellCurrency(currencyCode, amountStr);
           await confirmDialog.alert('Sukces', `Sprzedano ${amountStr} ${currencyCode}`);
           if (onTransactionComplete) {
             await onTransactionComplete();

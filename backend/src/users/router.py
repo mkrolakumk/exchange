@@ -1,12 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from fastapi import HTTPException
 from src.users.models import UserCreate, User
 from src.users.utils import create_user_in_db, get_user_by_email, authenticate_user, get_current_user
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db import pg_db
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
 user_router = APIRouter(prefix="/users", tags=["users"])
 
 
@@ -27,7 +26,16 @@ async def register(user_data: UserCreate, session: AsyncSession = Depends(pg_db.
     return await create_user_in_db(user_data, session)
 
 
-@user_router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(pg_db.get_session)):
-    """Funkcja loguje użytkownika i zwraca token dostępu."""
-    return await authenticate_user(email=form_data.username, password=form_data.password, session=session)
+@user_router.post("/login", response_model=User)
+async def login(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: AsyncSession = Depends(pg_db.get_session)
+) -> User:
+    return await authenticate_user(email=form_data.username, password=form_data.password, response=response, session=session)
+
+
+@user_router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie("session_token")
+    return {"message": "Wylogowano pomyślnie"}

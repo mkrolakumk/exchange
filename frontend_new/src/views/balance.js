@@ -19,12 +19,6 @@ export function createBalanceView() {
   async function init() {
     container = document.getElementById('app');
     abortController = new AbortController();
-
-    const isLoggedIn = await state.isLoggedIn();
-    if (!isLoggedIn) {
-      renderUnauthorized();
-      return;
-    }
   }
 
   async function render() {
@@ -32,9 +26,8 @@ export function createBalanceView() {
     clearEventListeners();
 
     try {
-      const token = await state.getToken();
       const [balanceData, currenciesData] = await Promise.all([
-        apiFetchBalance(token),
+        apiFetchBalance(),
         fetchCurrencies(),
       ]);
 
@@ -148,8 +141,7 @@ export function createBalanceView() {
     }
 
     try {
-      const token = await state.getToken();
-      await apiDepositBalance(token, currency, amountStr);
+      await apiDepositBalance(currency, amountStr);
       await confirmDialog.alert('Sukces', `Wpłacono ${amountStr} ${currency}`);
       await render();
     } catch (error) {
@@ -212,8 +204,7 @@ export function createBalanceView() {
     }
 
     try {
-      const token = await state.getToken();
-      await apiWithdrawBalance(token, currency, amountStr, bankAccount);
+      await apiWithdrawBalance(currency, amountStr, bankAccount);
       await confirmDialog.alert('Sukces', `Wypłacono ${amountStr} ${currency}`);
       await render();
     } catch (error) {
@@ -289,26 +280,6 @@ export function createBalanceView() {
 
     container.appendChild(title);
     container.appendChild(grid);
-  }
-
-  function renderUnauthorized() {
-    const message = document.createElement('div');
-    message.className = 'empty-state';
-
-    const icon = document.createElement('div');
-    icon.className = 'empty-icon';
-    icon.textContent = '🔒';
-
-    const title = document.createElement('h3');
-    title.textContent = 'Dostęp wymagany';
-
-    const description = document.createElement('p');
-    description.textContent = 'Zaloguj się, aby zobaczyć swoje środki.';
-
-    message.appendChild(icon);
-    message.appendChild(title);
-    message.appendChild(description);
-    container.appendChild(message);
   }
 
   function renderError(message) {

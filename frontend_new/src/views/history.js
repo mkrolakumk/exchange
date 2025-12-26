@@ -11,11 +11,6 @@ export function createHistoryView() {
   async function init() {
     container = document.getElementById('app');
     abortController = new AbortController();
-
-    const isLoggedIn = await state.isLoggedIn();
-    if (!isLoggedIn) {
-      return;
-    }
   }
 
   async function render() {
@@ -39,9 +34,8 @@ export function createHistoryView() {
     showLoader();
 
     try {
-      const token = await state.getToken();
       const [tradesData, currenciesData] = await Promise.all([
-        fetchTrades(token, page),
+        fetchTrades(page),
         fetchCurrencies(),
       ]);
 

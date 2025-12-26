@@ -13,13 +13,7 @@ export function createNotificationsView() {
   }
 
   async function render() {
-    const token = await state.getToken();
-    if (!token) {
-      container.textContent = 'Musisz być zalogowany';
-      return;
-    }
-
-    const notifications = await fetchNotifications(token);
+    const notifications = await fetchNotifications();
     const currenciesData = await fetchCurrencies();
 
     currencyList = Object.entries(currenciesData)
@@ -340,9 +334,8 @@ export function createNotificationsView() {
       direction,
     });
 
-    const token = await state.getToken();
     try {
-      await updateNotifications(token, notifications);
+      await updateNotifications(notifications);
       selectedCurrency = null;
     } catch (err) {
       await confirmDialog.alert('Błąd', 'Błąd podczas dodawania powiadomienia: ' + err.message);
@@ -351,9 +344,8 @@ export function createNotificationsView() {
 
   async function handleDeleteNotification(idx, notifications) {
     notifications.splice(idx, 1);
-    const token = await state.getToken();
     try {
-      await updateNotifications(token, notifications);
+      await updateNotifications(notifications);
     } catch (err) {
       await confirmDialog.alert('Błąd', 'Błąd podczas usuwania powiadomienia: ' + err.message);
     }

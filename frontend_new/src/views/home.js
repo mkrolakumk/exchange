@@ -122,9 +122,6 @@ export function createHomeView() {
     wrappers = [];
 
     const isLoggedIn = await state.isLoggedIn();
-    if (isLoggedIn) {
-      await fetchBalance(await state.getToken());
-    }
 
     for (const [index, currency] of currencies.entries()) {
       if (currency.code === 'PLN') continue;
@@ -142,8 +139,6 @@ export function createHomeView() {
         previousPriceSell: prevPrice?.buy_price,
         isLoggedIn,
         onTransactionComplete: async () => {
-          const token = await state.getToken();
-          await fetchBalance(token);
           const rowData = currencyRows.get(currency.code);
           if (rowData) await rowData.row.updateBalance();
         },

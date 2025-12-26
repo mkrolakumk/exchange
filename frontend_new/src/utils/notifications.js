@@ -45,12 +45,12 @@ export async function checkNotificationConditions() {
     return;
   }
 
-  const token = await state.getToken();
-  if (!token) return;
+  const isLoggedIn = await state.isLoggedIn();
+  if (!isLoggedIn) return;
 
   try {
     console.log('Sprawdzanie warunków powiadomień...');
-    const notifications = await fetchNotifications(token);
+    const notifications = await fetchNotifications();
 
     if (notifications.length === 0) return;
 

@@ -7,6 +7,7 @@ import { state } from './state.js';
 import {
   registerUser,
   loginUser,
+  logoutUser,
   getUserMe,
   checkBackendStatus,
   backendStatus,
@@ -44,8 +45,7 @@ async function processQueueIfOnline() {
   const isLoggedIn = await state.isLoggedIn();
 
   if (status.isOnline && isLoggedIn) {
-    const token = await state.getToken();
-    const processed = await operationsQueue.process(token);
+    const processed = await operationsQueue.process();
 
     if (processed > 0) {
       console.log(`Przetworzono ${processed} operacji z kolejki`);
@@ -62,10 +62,9 @@ async function handleAuth(data) {
     await registerUser(data.email, data.password, data.firstName, data.lastName);
   }
 
-  const loginResponse = await loginUser(data.email, data.password);
-  await state.setToken(loginResponse.access_token);
+  await loginUser(data.email, data.password);
 
-  const userData = await getUserMe(loginResponse.access_token);
+  const userData = await getUserMe();
   await state.setUser(userData);
 
   updateMenuState(true);
@@ -73,6 +72,7 @@ async function handleAuth(data) {
 }
 
 async function handleLogout() {
+  await logoutUser();
   await state.clearAuth();
   updateMenuState(false);
   router.navigate('home');
