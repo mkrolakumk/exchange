@@ -1,7 +1,12 @@
 import { getFromDB, saveToDB } from './db.js';
 
 function getApiBase() {
+  const injectedUrl = '__API_URL__';
   const defaultUrl = 'http://localhost:8000';
+
+  if (injectedUrl && !injectedUrl.startsWith('__')) {
+    return injectedUrl;
+  }
 
   let envUrl;
   try {
