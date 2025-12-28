@@ -1,5 +1,4 @@
-const VERSION = 'v1';
-const CACHE_NAME = `exchange-${VERSION}`;
+const VERSION = 'v4';
 const STATIC_CACHE = `static-${VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${VERSION}`;
 
@@ -57,6 +56,19 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Nie cachuj żądań API - przepuść je bezpośrednio do sieci
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Dla metod innych niż GET (POST, PUT, DELETE, PATCH) - przepuść bezpośrednio
+  if (request.method !== 'GET') {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Dla zasobów z tego samego originu - cache-first strategy
   if (url.origin === location.origin) {
     event.respondWith(
       caches
@@ -65,24 +77,30 @@ self.addEventListener('fetch', (event) => {
           return (
             cachedResponse ||
             fetch(request).then((networkResponse) => {
-              return caches.open(DYNAMIC_CACHE).then((cache) => {
-                cache.put(request, networkResponse.clone());
-                return networkResponse;
-              });
+              // Cachuj tylko poprawne odpowiedzi
+              if (networkResponse && networkResponse.status === 200) {
+                return caches.open(DYNAMIC_CACHE).then((cache) => {
+                  cache.put(request, networkResponse.clone());
+                  return networkResponse;
+                });
+              }
+              return networkResponse;
             })
           );
         })
         .catch(() => {
+          // Fallback do index.html dla navigation requests
           if (request.destination === 'document') {
             return caches.match('./index.html');
           }
         })
     );
   } else {
+    // Dla zewnętrznych zasobów - network-first strategy
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (request.method === 'GET') {
+          if (response && response.status === 200) {
             return caches.open(DYNAMIC_CACHE).then((cache) => {
               cache.put(request, response.clone());
               return response;
