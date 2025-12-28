@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: '22'
       
+      - name: Install expect
+        run: sudo apt-get update && sudo apt-get install -y expect
+      
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
       
@@ -29,7 +32,14 @@ jobs:
         working-directory: frontend
         run: |
           mkdir -p twa-build && cd twa-build
-          printf "y\ny\n" | bubblewrap init --manifest ../manifest.json --skipPwaValidation
+          expect -c '
+            spawn bubblewrap init --manifest ../manifest.json --skipPwaValidation
+            expect "Do you want Bubblewrap to install the JDK (recommended)?"
+            send "y\\r"
+            expect "Do you want Bubblewrap to install the Android SDK (recommended)?"
+            send "y\\r"
+            interact
+          '
       
       - name: Generate keystore
         run: |
@@ -41,11 +51,6 @@ jobs:
       - name: Update manifest
         working-directory: frontend/twa-build
         run: |
-          # Zakładam, że backend_url to pełny URL, np. https://api.example.com
-          # Ale .host w twa-manifest.json powinien być domeną bez https:// i ścieżki
-          # Jeśli backend_url to URL API, a nie host PWA, to to może być błędem – dostosuj jeśli potrzeba
-          # np. jq '.host = "example.com"' jeśli host jest stały
-          # Albo wyciągnij host z URL: ale na razie zostawiam jak jest, ale dodaję usunięcie https://
           backend_host=$(echo "${{ github.event.inputs.backend_url }}" | sed -e 's|^https://||' -e 's|/.*$||')
           jq --arg host "$backend_host" '.host = $host | .signingKey.path = "../../keystore.jks" | .signingKey.alias = "kantor-key"' twa-manifest.json > tmp.json
           mv tmp.json twa-manifest.json
@@ -56,8 +61,14 @@ jobs:
           KEYSTORE_PASSWORD: android
           KEY_PASSWORD: android
         run: |
-          # Bubblewrap build promptuje za passwordami, więc pipe'ujemy je
-          printf "${KEYSTORE_PASSWORD}\n${KEY_PASSWORD}\n" | bubblewrap build --skipPwaValidation
+          expect -c '
+            spawn bubblewrap build --skipPwaValidation
+            expect "Enter keystore password:"
+            send "$env(KEYSTORE_PASSWORD)\\r"
+            expect "Enter key password for kantor-key:"
+            send "$env(KEY_PASSWORD)\\r"
+            interact
+          '
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
