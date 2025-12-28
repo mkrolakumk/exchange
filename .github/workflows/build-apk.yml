@@ -22,39 +22,28 @@ jobs:
         working-directory: frontend/src/utils
         run: sed -i "s|__API_URL__|${{ github.event.inputs.backend_url }}|g" api.js
       
-      - name: Use PWABuilder Cloud API
+      - name: Setup Capacitor
         working-directory: frontend
         run: |
+          npm install -g @capacitor/cli @capacitor/core @capacitor/android
+          npm init -y
+          npx cap init "Kantor" "pl.kantor.app" --web-dir .
+          npx cap add android
+      
+      - name: Configure Android project
+        working-directory: frontend/android
+        run: |
           backend_host=$(echo "${{ github.event.inputs.backend_url }}" | sed -e 's|^https\?://||' -e 's|/.*$||')
-          
-          jq --arg url "https://$backend_host/" \
-             --arg icon192 "https://$backend_host/assets/icons/icon-192.png" \
-             --arg icon512 "https://$backend_host/assets/icons/icon-512.png" \
-             '.start_url = $url | .icons[0].src = $icon192 | .icons[1].src = $icon512' \
-             manifest.json > manifest-build.json
-          
-          curl -X POST https://pwabuilder-apk-web.azurewebsites.net/generateApkZip \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"name\": \"Kantor Internetowy\",
-              \"packageId\": \"pl.kantor.app\",
-              \"host\": \"$backend_host\",
-              \"startUrl\": \"/\",
-              \"themeColor\": \"#3b82f6\",
-              \"backgroundColor\": \"#0a0e27\",
-              \"iconUrl\": \"https://$backend_host/assets/icons/icon-512.png\",
-              \"maskableIconUrl\": \"https://$backend_host/assets/icons/icon-512.png\",
-              \"signing\": {
-                \"file\": null,
-                \"alias\": \"my-key-alias\"
-              }
-            }" \
-            -o apk.zip
-          
-          unzip apk.zip -d apk-output
+          echo "https://$backend_host" > app/src/main/assets/capacitor.config.json
+      
+      - name: Build APK
+        working-directory: frontend/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: kantor-apk
-          path: frontend/apk-output/**/*.apk
+          path: frontend/android/app/build/outputs/apk/release/*.apk
