@@ -34,10 +34,10 @@ jobs:
           mkdir -p twa-build && cd twa-build
           expect -c '
             spawn bubblewrap init --manifest ../manifest.json --skipPwaValidation
-            expect "Do you want Bubblewrap to install the JDK (recommended)?"
-            send "y\\r"
-            expect "Do you want Bubblewrap to install the Android SDK (recommended)?"
-            send "y\\r"
+            expect "install the JDK"
+            send "y\r"
+            expect "install the Android SDK"
+            send "y\r"
             expect eof
           '
           ls -la
@@ -66,10 +66,10 @@ jobs:
           expect -c '
             spawn bubblewrap build --skipPwaValidation
             expect "Enter keystore password:"
-            send "$env(KEYSTORE_PASSWORD)\\r"
+            send "$env(KEYSTORE_PASSWORD)\r"
             expect "Enter key password for kantor-key:"
-            send "$env(KEY_PASSWORD)\\r"
-            interact
+            send "$env(KEY_PASSWORD)\r"
+            expect eof
           '
       
       - name: Upload APK
