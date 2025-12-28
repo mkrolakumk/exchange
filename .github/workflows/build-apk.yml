@@ -46,7 +46,7 @@ jobs:
           npm install @capacitor/cli @capacitor/core @capacitor/android
           npx cap init "Kantor" "pl.kantor.app" --web-dir www
 
-      - name: Configure server URL (opcjonalnie – dla remote loading)
+      - name: Configure server URL (opcjonalnie)
         working-directory: ./frontend
         run: |
           jq '.server = { "url": "${{ inputs.backend_url }}", "allowNavigation": [] }' capacitor.config.json > temp.json && mv temp.json capacitor.config.json
@@ -59,14 +59,14 @@ jobs:
         working-directory: ./frontend
         run: npx cap copy android
 
-      - name: Build Release APK (unsigned)
+      - name: Build Debug APK (signed automatically with debug key)
         working-directory: ./frontend/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace  # --stacktrace na wszelki wypadek
+          ./gradlew assembleDebug  # <--- TU ZMIANA: assembleDebug zamiast assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kantor-apk
-          path: frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
