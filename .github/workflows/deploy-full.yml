@@ -1,0 +1,250 @@
+name: Deploy Full
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-infrastructure:
+    runs-on: ubuntu-latest
+    outputs:
+      infra-exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      
+      - name: Check if infrastructure exists
+        id: check
+        run: |
+          if aws cloudformation describe-stacks --stack-name ExchangeCompute 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Infrastructure exists - will update services only"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "🆕 No infrastructure found - will deploy from scratch"
+          fi
+  
+  build:
+    needs: check-infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      
+      - name: Install CDK
+        if: needs.check-infrastructure.outputs.infra-exists == 'false'
+        run: |
+          npm install -g aws-cdk
+          pip install -r infra/requirements.txt
+      
+      - name: Deploy ECR repos
+        if: needs.check-infrastructure.outputs.infra-exists == 'false'
+        working-directory: infra
+        run: |
+          cdk bootstrap
+          cdk synth
+          cdk deploy ExchangeContainers --require-approval never
+      
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region eu-central-1 | \
+            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com
+      
+      - name: Build and push backend
+        working-directory: backend
+        run: |
+          docker build -t exchange-backend .
+          docker tag exchange-backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/exchange-backend:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/exchange-backend:latest
+      
+      - name: Get existing CloudFront URL (if exists)
+        if: needs.check-infrastructure.outputs.infra-exists == 'true'
+        id: existing-cdn
+        run: |
+          CDN_DOMAIN=$(aws cloudformation describe-stacks --stack-name ExchangeCDN --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontDomain`].OutputValue' --output text | tr -d '[:space:]')
+          if [ -z "$CDN_DOMAIN" ]; then
+            echo "❌ ERROR: CloudFront domain not found in CloudFormation outputs!"
+            exit 1
+          fi
+          echo "domain=$CDN_DOMAIN" >> $GITHUB_OUTPUT
+          echo "Using existing CloudFront: https://$CDN_DOMAIN"
+      
+      - name: Build and push frontend (with real CloudFront if exists, placeholder if new)
+        working-directory: frontend
+        run: |
+          if [ "${{ needs.check-infrastructure.outputs.infra-exists }}" == "true" ]; then
+            API_URL="https://${{ steps.existing-cdn.outputs.domain }}/api"
+          else
+            API_URL="https://placeholder.example.com/api"
+          fi
+          echo "Building frontend with API_URL: $API_URL"
+          docker build --build-arg API_URL=$API_URL -t exchange-frontend .
+          docker tag exchange-frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/exchange-frontend:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/exchange-frontend:latest
+  
+  deploy:
+    needs: [check-infrastructure, build]
+    runs-on: ubuntu-latest
+    outputs:
+      cdn-domain: ${{ steps.cdn.outputs.domain }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        if: needs.check-infrastructure.outputs.infra-exists == 'false'
+        with:
+          python-version: '3.11'
+      
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      
+      - name: Install CDK
+        if: needs.check-infrastructure.outputs.infra-exists == 'false'
+        run: |
+          npm install -g aws-cdk
+          pip install -r infra/requirements.txt
+      
+      - name: Deploy infrastructure
+        if: needs.check-infrastructure.outputs.infra-exists == 'false'
+        working-directory: infra
+        run: cdk deploy ExchangeNetwork ExchangeDatabase ExchangeCompute ExchangeCDN --require-approval never
+      
+      - name: Get CloudFront URL
+        id: cdn
+        run: |
+          CDN_DOMAIN=$(aws cloudformation describe-stacks --stack-name ExchangeCDN --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontDomain`].OutputValue' --output text | tr -d '[:space:]')
+          if [ -z "$CDN_DOMAIN" ]; then
+            echo "❌ ERROR: CloudFront domain not found!"
+            exit 1
+          fi
+          echo "domain=$CDN_DOMAIN" >> $GITHUB_OUTPUT
+          echo "CloudFront URL: https://$CDN_DOMAIN"
+      
+      - name: Restart services (if infrastructure already exists)
+        if: needs.check-infrastructure.outputs.infra-exists == 'true'
+        run: |
+          echo "🔍 Searching for ECS cluster..."
+          CLUSTER_ARN=$(aws ecs list-clusters --query 'clusterArns[?contains(@, `Exchange`)]' --output text)
+          if [ -z "$CLUSTER_ARN" ]; then
+            echo "❌ ERROR: No ECS cluster found!"
+            exit 1
+          fi
+          CLUSTER_NAME=$(echo $CLUSTER_ARN | rev | cut -d'/' -f1 | rev)
+          echo "📋 Found cluster: $CLUSTER_NAME (ARN: $CLUSTER_ARN)"
+          
+          echo "🔍 Searching for services..."
+          BACKEND_ARN=$(aws ecs list-services --cluster $CLUSTER_NAME --query 'serviceArns[?contains(@, `Backend`)]' --output text)
+          FRONTEND_ARN=$(aws ecs list-services --cluster $CLUSTER_NAME --query 'serviceArns[?contains(@, `Frontend`)]' --output text)
+          
+          if [ -z "$BACKEND_ARN" ] || [ -z "$FRONTEND_ARN" ]; then
+            echo "❌ ERROR: Services not found!"
+            echo "Backend ARN: $BACKEND_ARN"
+            echo "Frontend ARN: $FRONTEND_ARN"
+            exit 1
+          fi
+          
+          BACKEND_SERVICE=$(echo $BACKEND_ARN | rev | cut -d'/' -f1 | rev)
+          FRONTEND_SERVICE=$(echo $FRONTEND_ARN | rev | cut -d'/' -f1 | rev)
+          
+          echo "📋 Backend service: $BACKEND_SERVICE"
+          echo "📋 Frontend service: $FRONTEND_SERVICE"
+          
+          echo "🔄 Restarting backend service..."
+          aws ecs update-service --cluster $CLUSTER_NAME --service $BACKEND_SERVICE --force-new-deployment
+          
+          echo "🔄 Restarting frontend service..."
+          aws ecs update-service --cluster $CLUSTER_NAME --service $FRONTEND_SERVICE --force-new-deployment
+          
+          echo "⏳ Waiting for services to stabilize (this may take 5-10 minutes)..."
+          echo "⏳ Waiting for backend service..."
+          aws ecs wait services-stable --cluster $CLUSTER_NAME --services $BACKEND_SERVICE || {
+            echo "⚠️ Backend service wait timed out, checking status..."
+            aws ecs describe-services --cluster $CLUSTER_NAME --services $BACKEND_SERVICE
+          }
+          
+          echo "⏳ Waiting for frontend service..."
+          aws ecs wait services-stable --cluster $CLUSTER_NAME --services $FRONTEND_SERVICE || {
+            echo "⚠️ Frontend service wait timed out, checking status..."
+            aws ecs describe-services --cluster $CLUSTER_NAME --services $FRONTEND_SERVICE
+          }
+          
+          echo "✅ Services restart initiated successfully"
+      
+      - name: Rebuild frontend with real CloudFront URL (if new infrastructure)
+        if: needs.check-infrastructure.outputs.infra-exists == 'false'
+        working-directory: frontend
+        run: |
+          echo "🔄 Rebuilding frontend with real CloudFront URL..."
+          aws ecr get-login-password --region eu-central-1 | \
+            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com
+          docker build --build-arg API_URL=https://${{ steps.cdn.outputs.domain }}/api -t exchange-frontend .
+          docker tag exchange-frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/exchange-frontend:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/exchange-frontend:latest
+      
+      - name: Restart frontend service (after rebuild)
+        if: needs.check-infrastructure.outputs.infra-exists == 'false'
+        run: |
+          echo "🔍 Searching for ECS cluster and frontend service..."
+          CLUSTER_ARN=$(aws ecs list-clusters --query 'clusterArns[?contains(@, `Exchange`)]' --output text)
+          CLUSTER_NAME=$(echo $CLUSTER_ARN | rev | cut -d'/' -f1 | rev)
+          
+          FRONTEND_ARN=$(aws ecs list-services --cluster $CLUSTER_NAME --query 'serviceArns[?contains(@, `Frontend`)]' --output text)
+          FRONTEND_SERVICE=$(echo $FRONTEND_ARN | rev | cut -d'/' -f1 | rev)
+          
+          if [ -z "$CLUSTER_NAME" ] || [ -z "$FRONTEND_SERVICE" ]; then
+            echo "❌ ERROR: Cluster or service not found!"
+            echo "Cluster: $CLUSTER_NAME"
+            echo "Frontend: $FRONTEND_SERVICE"
+            exit 1
+          fi
+          
+          echo "📋 Cluster: $CLUSTER_NAME"
+          echo "📋 Frontend service: $FRONTEND_SERVICE"
+          
+          echo "🔄 Restarting frontend service to pull new image..."
+          aws ecs update-service --cluster $CLUSTER_NAME --service $FRONTEND_SERVICE --force-new-deployment
+          
+          echo "⏳ Waiting for frontend service to stabilize (this may take 5-10 minutes)..."
+          aws ecs wait services-stable --cluster $CLUSTER_NAME --services $FRONTEND_SERVICE || {
+            echo "⚠️ Frontend service wait timed out, checking status..."
+            aws ecs describe-services --cluster $CLUSTER_NAME --services $FRONTEND_SERVICE
+            echo "⚠️ Service may still be starting - check AWS Console for details"
+          }
+          
+          echo "✅ Frontend service restart completed"
+  
+  summary:
+    needs: [check-infrastructure, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment summary
+        run: |
+          echo "🎉 Deployment complete!"
+          echo ""
+          if [ "${{ needs.check-infrastructure.outputs.infra-exists }}" == "true" ]; then
+            echo "✅ Updated existing infrastructure"
+          else
+            echo "✅ Deployed new infrastructure"
+          fi
+          echo ""
+          echo "🌐 Application URLs:"
+          echo "Backend API: https://${{ needs.deploy.outputs.cdn-domain }}/api/docs"
+          echo "Frontend: https://${{ needs.deploy.outputs.cdn-domain }}"
+          echo ""
+          echo "📱 Next steps:"
+          echo "To build Android APK, go to Actions → 'Build Android APK' → Run workflow"
+          echo "Enter CloudFront domain: ${{ needs.deploy.outputs.cdn-domain }}"

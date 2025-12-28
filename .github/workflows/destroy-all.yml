@@ -1,0 +1,37 @@
+name: Destroy All
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "DESTROY" to confirm'
+        required: true
+        type: string
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'DESTROY'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install CDK
+        run: |
+          npm install -g aws-cdk
+          pip install -r infra/requirements.txt
+      
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      
+      - name: Destroy all stacks
+        working-directory: infra
+        run: cdk destroy --all --force

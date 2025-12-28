@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: exchange_postgres
+    env_file:
+      - .env
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exchange_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: exchange_backend
+    env_file:
+      - .env
+    expose:
+      - 8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - exchange_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: exchange_frontend
+    env_file:
+      - .env
+    ports:
+      - "${FRONTEND_PORT:-8001}:80"
+    depends_on:
+      - backend
+    networks:
+      - exchange_network
+
+volumes:
+  postgres_data:
+
+networks:
+  exchange_network:
+    driver: bridge
