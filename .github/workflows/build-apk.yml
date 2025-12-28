@@ -36,7 +36,7 @@ jobs:
         working-directory: frontend
         run: |
           mkdir -p twa-build && cd twa-build
-          echo "y" | bubblewrap init --manifest ../manifest.json --skipPwaValidation
+          printf "n\nn\n" | bubblewrap init --manifest ../manifest.json --skipPwaValidation
       
       - name: Generate keystore
         run: |
