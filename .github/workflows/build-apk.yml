@@ -12,38 +12,62 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Inject API URL
-        working-directory: frontend/src/utils
-        run: sed -i "s|__API_URL__|${{ github.event.inputs.backend_url }}|g" api.js
-      
+        working-directory: ./frontend/src/utils
+        run: sed -i "s|__API_URL__|${{ inputs.backend_url }}|g" api.js
+
+      - name: Prepare web assets (copy root files to www folder)
+        working-directory: ./frontend
+        run: |
+          mkdir www
+          cp -r assets src index.html manifest.json sw.js www/
+          # Wszystko co jest w root frontend staje się statycznymi assetami PWA
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Setup Capacitor
-        working-directory: frontend
+        working-directory: ./frontend
         run: |
           npm init -y
           npm install @capacitor/cli @capacitor/core @capacitor/android
-          npx cap init "Kantor" "pl.kantor.app" --web-dir .
-          npx cap add android
-      
-      - name: Configure Android project
-        working-directory: frontend/android
+          npx cap init "Kantor" "pl.kantor.app" --web-dir www
+
+      - name: Configure server URL in capacitor.config.json
+        working-directory: ./frontend
         run: |
-          backend_host=$(echo "${{ github.event.inputs.backend_url }}" | sed -e 's|^https\?://||' -e 's|/.*$||')
-          echo "https://$backend_host" > app/src/main/assets/capacitor.config.json
-      
-      - name: Build APK
-        working-directory: frontend/android
+          jq '.server = { "url": "${{ inputs.backend_url }}", "allowNavigation": [] }' capacitor.config.json > temp.json && mv temp.json capacitor.config.json
+
+      - name: Add Android platform
+        working-directory: ./frontend
+        run: npx cap add android
+
+      - name: Copy web assets to Android
+        working-directory: ./frontend
+        run: npx cap copy android
+
+      - name: Build Release APK (unsigned)
+        working-directory: ./frontend/android
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease
-      
-      - name: Upload APK
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kantor-apk
-          path: frontend/android/app/build/outputs/apk/release/*.apk
+          path: frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk
