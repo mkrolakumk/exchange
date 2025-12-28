@@ -1,12 +1,11 @@
-const DB_NAME = 'kantor-db';
+const DB_NAME = "ExchangeDB";
 const DB_VERSION = 1;
-const STORE_NAME = 'auth';
+const STORE_NAME = "auth";
 
 let db = null;
 
 async function initDB() {
   return new Promise((resolve, reject) => {
-    console.log('Inicjalizacja bazy danych IndexedDB');
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => reject(request.error);
@@ -29,10 +28,10 @@ async function getDB() {
   return db;
 }
 
-async function dbGet(key) {
+export async function getFromDB(key) {
   const database = await getDB();
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(STORE_NAME, 'readonly');
+    const transaction = database.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
     const request = store.get(key);
 
@@ -41,10 +40,10 @@ async function dbGet(key) {
   });
 }
 
-async function dbSet(key, value) {
+export async function saveToDB(key, value) {
   const database = await getDB();
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(STORE_NAME, 'readwrite');
+    const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
     const request = store.put(value, key);
 
@@ -53,10 +52,10 @@ async function dbSet(key, value) {
   });
 }
 
-async function dbDelete(key) {
+export async function deleteFromDB(key) {
   const database = await getDB();
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(STORE_NAME, 'readwrite');
+    const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
     const request = store.delete(key);
 

@@ -1,11 +1,13 @@
-const onboarding = {
+import { getFromDB, saveToDB } from './db.js';
+
+export const onboarding = {
   async isCompleted() {
-    const completed = await dbGet('onboarding_completed');
+    const completed = await getFromDB('onboarding_completed');
     return completed === true;
   },
 
   async markCompleted() {
-    await dbSet('onboarding_completed', true);
+    await saveToDB('onboarding_completed', true);
   },
 
   createTooltip(text, targetEl, buttons) {
@@ -54,7 +56,7 @@ const onboarding = {
   },
 
   step1() {
-    const pricesSection = document.getElementById('prices-section');
+    const pricesSection = document.querySelector('#app');
     const tooltip = this.createTooltip(
       'To ekran główny. Zobaczysz tutaj aktualne kursy wszystkich walut',
       pricesSection,
@@ -79,14 +81,14 @@ const onboarding = {
       menuBtn,
       [
         {
-          text: 'Rozumiem',
+          text: 'Zakończ',
           onClick: () => {
             this.removeTooltip(tooltip, menuBtn);
             this.markCompleted();
           },
         },
         {
-          text: 'Idziemy dalej',
+          text: 'Pokaż menu',
           primary: true,
           onClick: () => {
             this.removeTooltip(tooltip, menuBtn);
@@ -102,19 +104,15 @@ const onboarding = {
   step3() {
     const loginBtn = document.getElementById('menu-login');
     const tooltip = this.createTooltip(
-      'To ekran logowania. Jeśli masz już konto - zaloguj się, jeśli nie → zarejestruj się błyskawicznie',
+      'Zaloguj się lub zarejestruj, aby korzystać z pełnych funkcji Kantoru',
       loginBtn,
       [
         {
-          text: 'Gratulacje! 🎉',
+          text: 'Rozumiem',
           primary: true,
-          onClick: async () => {
+          onClick: () => {
             this.removeTooltip(tooltip, loginBtn);
-            await this.markCompleted();
-            const loggedIn = await auth.isLoggedIn();
-            if (!loggedIn) {
-              loginBtn.click();
-            }
+            this.markCompleted();
           },
         },
       ]
