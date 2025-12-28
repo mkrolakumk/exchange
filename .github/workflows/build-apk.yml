@@ -25,8 +25,8 @@ jobs:
       - name: Setup Capacitor
         working-directory: frontend
         run: |
-          npm install -g @capacitor/cli @capacitor/core @capacitor/android
           npm init -y
+          npm install @capacitor/cli @capacitor/core @capacitor/android
           npx cap init "Kantor" "pl.kantor.app" --web-dir .
           npx cap add android
       
