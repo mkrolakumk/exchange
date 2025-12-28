@@ -25,6 +25,12 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g @pwabuilder/cli
       
+      - name: Verify PWABuilder
+        run: |
+          which pwabuilder || echo "pwabuilder not in PATH"
+          ls -la $(npm root -g)/@pwabuilder/
+          npm list -g @pwabuilder/cli
+      
       - name: Prepare manifest
         working-directory: frontend
         run: |
@@ -34,7 +40,7 @@ jobs:
       - name: Build APK with PWABuilder
         working-directory: frontend
         run: |
-          pwabuilder package \
+          npx @pwabuilder/cli package \
             --platform android \
             --manifest manifest-pwa.json \
             --output ./apk-output
