@@ -38,8 +38,10 @@ jobs:
             send "y\\r"
             expect "Do you want Bubblewrap to install the Android SDK (recommended)?"
             send "y\\r"
-            interact
+            expect eof
           '
+          ls -la
+          cat twa-manifest.json
       
       - name: Generate keystore
         run: |
