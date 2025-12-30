@@ -38,7 +38,8 @@ async def withdraw_funds_by_user(amount: Decimal, bank_account: str, currency_co
             status_code=400, detail="Nieprawidłowy numer konta bankowego.")
     response = await withdraw_funds(current_user.id, amount, currency_code, session)
     await session.close()
-    await sleep(2)  # symulacja zlecenia przelewu, poza transakcją bazy danych
+    # symulacja zlecenia przelewu, poza transakcją bazy danych
+    await sleep(0.01)
     return response
 
 
