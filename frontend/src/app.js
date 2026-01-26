@@ -21,12 +21,20 @@ import { operationsQueue } from './utils/queue.js';
 
 const router = createRouter();
 let authModal;
+let previousOnlineStatus = true;
 
 async function updateConnectionStatus() {
   await checkBackendStatus();
   const status = await backendStatus.getStatus();
 
   document.body.classList.toggle('offline', !status.isOnline);
+
+  if (previousOnlineStatus === false && status.isOnline === true) {
+    const currentPath = window.location.hash.slice(1) || 'home';
+    router.navigate(currentPath);
+  }
+
+  previousOnlineStatus = status.isOnline;
 
   const statusText = document.getElementById('status-text');
   if (!statusText) return;
@@ -54,6 +62,29 @@ async function processQueueIfOnline() {
         router.navigate('balance');
       }
     }
+  }
+}
+
+function checkConnectionQuality() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const banner = document.getElementById('slow-connection-banner');
+
+  if (!connection) return;
+
+  const slowTypes = ['slow-2g', '2g', '3g'];
+  const isSlow = slowTypes.includes(connection.effectiveType) || !navigator.onLine;
+
+  if (isSlow && !banner) {
+    const newBanner = document.createElement('div');
+    newBanner.id = 'slow-connection-banner';
+    newBanner.className = 'slow-connection-warning';
+    newBanner.innerHTML =
+      '<p>⚠️ Wykryto wolne łącze. Nie jesteśmy w stanie zagwarantować aktualności danych.</p>';
+    document.body.insertBefore(newBanner, document.body.firstChild);
+    document.body.style.paddingTop = '120px';
+  } else if (!isSlow && banner) {
+    banner.remove();
+    document.body.style.paddingTop = '80px';
   }
 }
 
@@ -113,8 +144,14 @@ async function init() {
   }
 
   updateConnectionStatus();
-  setInterval(updateConnectionStatus, 30000);
+  setInterval(updateConnectionStatus, 5000);
   setInterval(processQueueIfOnline, 20000);
+
+  checkConnectionQuality();
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (connection) {
+    connection.addEventListener('change', checkConnectionQuality);
+  }
 
   install.init();
 
@@ -124,7 +161,3 @@ async function init() {
 }
 
 init();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./src/sw.js');
-}

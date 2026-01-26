@@ -25,16 +25,20 @@ export function createBalanceView() {
     clearContainer();
     clearEventListeners();
 
+    showLoader();
+
     try {
       const [balanceData, currenciesData] = await Promise.all([
         apiFetchBalance(),
         fetchCurrencies(),
       ]);
 
+      clearContainer();
       const currencies = await prepareDisplayCurrencies(balanceData, currenciesData);
       renderBalanceView(currencies, balanceData);
     } catch (error) {
       console.error('Błąd ładowania danych:', error);
+      clearContainer();
       renderError('Nie udało się załadować danych. Spróbuj ponownie później.');
     }
   }
@@ -287,6 +291,21 @@ export function createBalanceView() {
     errorEl.className = 'warning';
     errorEl.textContent = message;
     container.appendChild(errorEl);
+  }
+
+  function showLoader() {
+    const loader = document.createElement('div');
+    loader.className = 'loader';
+
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+
+    const text = document.createElement('span');
+    text.textContent = 'Ładowanie salda...';
+
+    loader.appendChild(spinner);
+    loader.appendChild(text);
+    container.appendChild(loader);
   }
 
   function clearContainer() {

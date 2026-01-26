@@ -1,10 +1,4 @@
-import {
-  fetchCurrencies,
-  fetchPrices,
-  checkBackendStatus,
-  fetchBalance,
-  backendStatus,
-} from '../utils/api.js';
+import { fetchCurrencies, fetchPrices, checkBackendStatus, backendStatus } from '../utils/api.js';
 import { state } from '../state.js';
 import { createCurrencyRow } from '../components/currencyRow.js';
 import { checkAndUpdateLocalCurrency } from '../utils/geolocation.js';
@@ -36,6 +30,7 @@ export function createHomeView() {
 
     const status = document.createElement('p');
     status.id = 'status';
+    status.className = 'hidden';
     status.textContent = 'Sprawdzanie statusu...';
     container.appendChild(status);
 
@@ -101,7 +96,7 @@ export function createHomeView() {
       } catch (error) {
         console.error('Błąd aktualizacji cen:', error);
       }
-    }, 10000);
+    }, 900);
   }
 
   async function checkStatus() {
@@ -111,6 +106,7 @@ export function createHomeView() {
     const statusEl = document.getElementById('status');
     if (statusEl) {
       statusEl.textContent = statusText;
+      statusEl.className = status.isOnline ? 'online' : 'offline';
     }
   }
 
@@ -231,6 +227,14 @@ export function createHomeView() {
       msg.textContent = `Brak wyników dla "${searchQuery}"`;
       list.parentNode.appendChild(msg);
     }
+  }
+
+  function renderError(message) {
+    container.textContent = '';
+    const errorEl = document.createElement('div');
+    errorEl.className = 'warning';
+    errorEl.textContent = message;
+    container.appendChild(errorEl);
   }
 
   return {

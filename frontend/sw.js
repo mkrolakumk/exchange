@@ -1,6 +1,6 @@
-const VERSION = 'v4';
-const STATIC_CACHE = `static-${VERSION}`;
-const DYNAMIC_CACHE = `dynamic-${VERSION}`;
+const VERSION = 'v1';
+const STATIC_CACHE = `exchange-cache-static-${VERSION}`;
+const DYNAMIC_CACHE = `exchange-cache-dynamic-${VERSION}`;
 
 const STATIC_ASSETS = [
   './',
@@ -25,7 +25,7 @@ const STATIC_ASSETS = [
   './src/utils/notifications.js',
   './src/utils/onboarding.js',
   './src/utils/chart.js',
-  './manifest.json',
+  './manifest.webmanifest',
 ];
 
 self.addEventListener('install', (event) => {
@@ -43,7 +43,8 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys
           .filter(
-            (key) => key.startsWith('exchange') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE
+            (key) =>
+              key.startsWith('exchange-cache-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE
           )
           .map((key) => caches.delete(key))
       );
@@ -56,20 +57,18 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Nie cachuj żądań API - przepuść je bezpośrednio do sieci
+  // Nie obsługuj żądań API - zawsze przepuść do sieci
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(request));
     return;
   }
 
-  // Dla metod innych niż GET (POST, PUT, DELETE, PATCH) - przepuść bezpośrednio
+  // Dla metod innych niż GET - przepuść bezpośrednio
   if (request.method !== 'GET') {
-    event.respondWith(fetch(request));
     return;
   }
 
-  // Dla zasobów z tego samego originu - cache-first strategy
-  if (url.origin === location.origin) {
+  // Dla zasobów z tego samego originu (ale NIE /api/*) - cache-first strategy
+  if (url.origin === self.location.origin) {
     event.respondWith(
       caches
         .match(request)
@@ -78,7 +77,7 @@ self.addEventListener('fetch', (event) => {
             cachedResponse ||
             fetch(request).then((networkResponse) => {
               // Cachuj tylko poprawne odpowiedzi
-              if (networkResponse && networkResponse.status === 200) {
+              if (networkResponse && networkResponse.ok) {
                 return caches.open(DYNAMIC_CACHE).then((cache) => {
                   cache.put(request, networkResponse.clone());
                   return networkResponse;
@@ -89,18 +88,20 @@ self.addEventListener('fetch', (event) => {
           );
         })
         .catch(() => {
-          // Fallback do index.html dla navigation requests
-          if (request.destination === 'document') {
+          // Fallback do index.html TYLKO dla nawigacji
+          if (request.mode === 'navigate' || request.destination === 'document') {
             return caches.match('./index.html');
           }
+          // Dla innych zasobów - brak fallbacku
+          throw new Error('Offline - brak zasobu w cache');
         })
     );
   } else {
-    // Dla zewnętrznych zasobów - network-first strategy
+    // Dla zewnętrznych zasobów (np. CDN) - network-first
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response && response.status === 200) {
+          if (response && response.ok) {
             return caches.open(DYNAMIC_CACHE).then((cache) => {
               cache.put(request, response.clone());
               return response;

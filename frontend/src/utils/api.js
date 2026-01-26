@@ -40,6 +40,25 @@ export class NetworkError extends Error {
   }
 }
 
+async function parseResponse(response) {
+  const contentType = response.headers.get('content-type');
+
+  if (contentType && contentType.includes('application/json')) {
+    try {
+      return await response.json();
+    } catch {
+      throw new NetworkError('Nieprawidłowa odpowiedź serwera');
+    }
+  }
+
+  const text = await response.text();
+  if (text.includes('<html>') || text.includes('502 Bad Gateway') || text.includes('503 Service')) {
+    throw new NetworkError('Serwer tymczasowo niedostępny');
+  }
+
+  throw new NetworkError('Nieprawidłowa odpowiedź serwera');
+}
+
 async function handleUnauthorized() {
   const { state } = await import('../state.js');
   try {
@@ -56,6 +75,7 @@ async function handleUnauthorized() {
 async function apiFetch(url, options = {}) {
   const defaultOptions = {
     credentials: 'include',
+    signal: AbortSignal.timeout(5000),
     ...options,
   };
 
@@ -71,6 +91,14 @@ async function apiFetch(url, options = {}) {
       throw new Error('Sesja wygasła. Zaloguj się ponownie.');
     }
 
+    if (response.status >= 500) {
+      await saveToDB('backend_status', {
+        isOnline: false,
+        lastCheck: Date.now(),
+      });
+      throw new NetworkError('Serwer tymczasowo niedostępny');
+    }
+
     return response;
   } catch (error) {
     if (error.message === 'Sesja wygasła. Zaloguj się ponownie.') {
@@ -80,6 +108,9 @@ async function apiFetch(url, options = {}) {
       isOnline: false,
       lastCheck: Date.now(),
     });
+    if (error.name === 'AbortError') {
+      throw new NetworkError('Przekroczono limit czasu połączenia');
+    }
     if (error.name === 'TypeError' || error.message.includes('fetch')) {
       throw new NetworkError();
     }
@@ -131,7 +162,7 @@ export async function registerUser(email, password, firstName, lastName) {
     }),
   });
   if (!response.ok) {
-    const error = await response.json();
+    const error = await parseResponse(response);
     throw new Error(error.detail || 'Błąd rejestracji');
   }
   console.log('Użytkownik zarejestrowany pomyślnie!');
@@ -201,7 +232,7 @@ export async function depositBalance(currencyCode, amount) {
     }
   );
   if (!response.ok) {
-    const error = await response.json();
+    const error = await parseResponse(response);
     throw new Error(error.detail || 'Błąd wpłaty');
   }
   console.log('Wpłata wykonana pomyślnie!');
@@ -219,7 +250,7 @@ export async function withdrawBalance(currencyCode, amount, bankAccount) {
     }
   );
   if (!response.ok) {
-    const error = await response.json();
+    const error = await parseResponse(response);
     throw new Error(error.detail || 'Błąd wypłaty');
   }
   console.log('Wypłata wykonana pomyślnie!');
@@ -244,7 +275,7 @@ export async function buyCurrency(currencyCode, amount) {
     }
   );
   if (!response.ok) {
-    const error = await response.json();
+    const error = await parseResponse(response);
     throw new Error(error.detail || 'Błąd kupna waluty');
   }
   console.log('Waluta kupiona pomyślnie!');
@@ -262,7 +293,7 @@ export async function sellCurrency(currencyCode, amount) {
     }
   );
   if (!response.ok) {
-    const error = await response.json();
+    const error = await parseResponse(response);
     throw new Error(error.detail || 'Błąd sprzedaży waluty');
   }
   console.log('Waluta sprzedana pomyślnie!');
@@ -303,7 +334,7 @@ export async function updateNotifications(notifications) {
     body: JSON.stringify({ notifications }),
   });
   if (!response.ok) {
-    const error = await response.json();
+    const error = await parseResponse(response);
     throw new Error(error.detail || 'Błąd zapisywania powiadomień');
   }
   console.log('Powiadomienia zapisane pomyślnie!');

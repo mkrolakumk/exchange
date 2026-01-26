@@ -1,12 +1,14 @@
 {
   "name": "Kantor Internetowy",
   "short_name": "Kantor",
-  "start_url": "./",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "description": "Twoja aplikacja do wymiany walut.",
   "lang": "pl-PL",
   "background_color": "#0a0e27",
   "theme_color": "#3b82f6",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "./assets/icons/icon-192.png",

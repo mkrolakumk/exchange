@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { buyCurrency, sellCurrency, fetchCurrencyHistory } from '../utils/api.js';
+import { buyCurrency, sellCurrency, fetchCurrencyHistory, backendStatus } from '../utils/api.js';
 import { createConfirmDialog } from './confirm.js';
 import { drawChart } from '../utils/chart.js';
 
@@ -124,6 +124,16 @@ export async function createCurrencyRow({
 
     buyBtn.onclick = async (e) => {
       e.stopPropagation();
+
+      const status = await backendStatus.getStatus();
+      if (!status.isOnline) {
+        await confirmDialog.alert(
+          'Brak połączenia',
+          'Nie można kupić waluty - brak połączenia z serwerem. Spróbuj ponownie później.'
+        );
+        return;
+      }
+
       const amountStr = await confirmDialog.prompt(
         `Kup ${currencyCode}`,
         `Wprowadź kwotę ${currencyCode} do kupienia (po ${Number(priceBuy).toFixed(
@@ -162,7 +172,18 @@ export async function createCurrencyRow({
         }
       } catch (error) {
         console.error('Błąd kupna:', error);
-        await confirmDialog.alert('Błąd', error.message || 'Nie udało się kupić waluty');
+        let errorMessage = 'Nie udało się wykonać transakcji';
+        if (
+          error.isNetworkError ||
+          error.message.includes('Brak połączenia') ||
+          error.message.includes('Serwer tymczasowo niedostępny')
+        ) {
+          errorMessage =
+            'Brak połączenia z serwerem. Sprawdź połączenie internetowe i spróbuj ponownie.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        await confirmDialog.alert('Błąd', errorMessage);
       }
     };
 
@@ -176,6 +197,16 @@ export async function createCurrencyRow({
     } else {
       sellBtn.onclick = async (e) => {
         e.stopPropagation();
+
+        const status = await backendStatus.getStatus();
+        if (!status.isOnline) {
+          await confirmDialog.alert(
+            'Brak połączenia',
+            'Nie można sprzedać waluty - brak połączenia z serwerem. Spróbuj ponownie później.'
+          );
+          return;
+        }
+
         const amountStr = await confirmDialog.prompt(
           `Sprzedaj ${currencyCode}`,
           `Masz: ${balance.toFixed(2)} ${currencyCode}. Wprowadź kwotę do sprzedaży (po ${Number(
@@ -214,7 +245,18 @@ export async function createCurrencyRow({
           }
         } catch (error) {
           console.error('Błąd sprzedaży:', error);
-          await confirmDialog.alert('Błąd', error.message || 'Nie udało się sprzedać waluty');
+          let errorMessage = 'Nie udało się wykonać transakcji';
+          if (
+            error.isNetworkError ||
+            error.message.includes('Brak połączenia') ||
+            error.message.includes('Serwer tymczasowo niedostępny')
+          ) {
+            errorMessage =
+              'Brak połączenia z serwerem. Sprawdź połączenie internetowe i spróbuj ponownie.';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          await confirmDialog.alert('Błąd', errorMessage);
         }
       };
     }

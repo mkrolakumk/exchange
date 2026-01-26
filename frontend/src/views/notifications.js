@@ -13,38 +13,48 @@ export function createNotificationsView() {
   }
 
   async function render() {
-    const notifications = await fetchNotifications();
-    const currenciesData = await fetchCurrencies();
-
-    currencyList = Object.entries(currenciesData)
-      .filter(([code]) => code !== 'PLN')
-      .map(([code, info]) => ({ code, name: info.name }));
-
-    const notificationPermission =
-      'Notification' in window ? Notification.permission : 'unsupported';
-
-    const permissionBanner = renderPermissionBanner(notificationPermission);
-    const notificationsTable = renderNotificationsTable(notifications, currenciesData);
-    const notificationForm = renderNotificationForm();
-
     container.textContent = '';
-    const card = document.createElement('div');
-    card.className = 'card';
+    showLoader();
 
-    const title = document.createElement('h2');
-    title.textContent = 'Powiadomienia';
-    card.appendChild(title);
+    try {
+      const notifications = await fetchNotifications();
+      const currenciesData = await fetchCurrencies();
 
-    if (permissionBanner) {
-      card.appendChild(permissionBanner);
+      container.textContent = '';
+
+      currencyList = Object.entries(currenciesData)
+        .filter(([code]) => code !== 'PLN')
+        .map(([code, info]) => ({ code, name: info.name }));
+
+      const notificationPermission =
+        'Notification' in window ? Notification.permission : 'unsupported';
+
+      const permissionBanner = renderPermissionBanner(notificationPermission);
+      const notificationsTable = renderNotificationsTable(notifications, currenciesData);
+      const notificationForm = renderNotificationForm();
+
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const title = document.createElement('h2');
+      title.textContent = 'Powiadomienia';
+      card.appendChild(title);
+
+      if (permissionBanner) {
+        card.appendChild(permissionBanner);
+      }
+
+      card.appendChild(notificationsTable);
+      card.appendChild(notificationForm);
+
+      container.appendChild(card);
+
+      attachEventListeners(notifications);
+    } catch (error) {
+      console.error('Błąd ładowania powiadomień:', error);
+      container.textContent = '';
+      renderError('Nie udało się załadować powiadomień. Spróbuj ponownie później.');
     }
-
-    card.appendChild(notificationsTable);
-    card.appendChild(notificationForm);
-
-    container.appendChild(card);
-
-    attachEventListeners(notifications);
   }
 
   function renderPermissionBanner(permission) {
@@ -61,7 +71,7 @@ export function createNotificationsView() {
     } else if (permission === 'unsupported') {
       const p = document.createElement('p');
       p.className = 'permission-unsupported';
-      p.textContent = '⚠️ Twoja przeglądarka nie wspiera powiadomień.';
+      p.textContent = '⚠️ Twoja przeglądarka (lub urządzenie) nie wspiera powiadomień.';
       banner.appendChild(p);
     } else {
       const p = document.createElement('p');
@@ -362,6 +372,28 @@ export function createNotificationsView() {
     if (container) {
       container.textContent = '';
     }
+  }
+
+  function showLoader() {
+    const loader = document.createElement('div');
+    loader.className = 'loader';
+
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+
+    const text = document.createElement('span');
+    text.textContent = 'Ładowanie powiadomień...';
+
+    loader.appendChild(spinner);
+    loader.appendChild(text);
+    container.appendChild(loader);
+  }
+
+  function renderError(message) {
+    const errorEl = document.createElement('div');
+    errorEl.className = 'warning';
+    errorEl.textContent = message;
+    container.appendChild(errorEl);
   }
 
   return {
