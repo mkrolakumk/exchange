@@ -32,7 +32,7 @@ class ComputeStack(Stack):
                 "DB__PORT": "5432",
                 "DB__DATABASE": "postgres",
                 "TOKEN__ALGORITHM": "HS256",
-                "TOKEN__ACCESS_TOKEN_EXPIRE_MINUTES": "30",
+                "TOKEN__ACCESS_TOKEN_EXPIRE_MINUTES": "2880",
                 "CURRENCY_API__ADDRESS": "https://api.nbp.pl/api/",
                 "API_ROOT_PATH": "/api",
             },
