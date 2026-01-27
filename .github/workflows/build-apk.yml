@@ -34,7 +34,7 @@ jobs:
         working-directory: ./frontend
         run: |
           mkdir www
-          cp -r assets src index.html manifest.json sw.js www/
+          cp -r assets src index.html manifest.webmanifest sw.js www/
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -46,7 +46,7 @@ jobs:
           npm install @capacitor/cli @capacitor/core @capacitor/android
           npx cap init "Kantor" "pl.kantor.app" --web-dir www
 
-      - name: Configure server URL (opcjonalnie)
+      - name: Configure server URL (optional)
         working-directory: ./frontend
         run: |
           jq '.server = { "url": "${{ inputs.backend_url }}", "allowNavigation": [] }' capacitor.config.json > temp.json && mv temp.json capacitor.config.json

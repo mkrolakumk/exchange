@@ -31,15 +31,15 @@ async def get_currency_prices() -> List[Price]:
 @currency_router.get("/history/{currency_code}", response_model=List[Price])
 async def get_currency_history(
         currency_code: str,
-        n: int = Query(default=10, ge=1, le=255,
-                       description="Liczba ostatnich notowań do pobrania (1-255)")
+        n: int = Query(default=10, ge=1, le=180,
+                       description="Liczba ostatnich notowań do pobrania (1-180)")
 ) -> List[Price]:
     """
     Funkcja pobiera N ostatnich kursów historycznych dla danej waluty.
 
     Args:
             currency_code: Kod waluty (np. USD, EUR, GBP)
-            n: Liczba ostatnich notowań do pobrania (domyślnie 10, maksymalnie 366)
+            n: Liczba ostatnich notowań do pobrania (domyślnie 10, maksymalnie 180)
 
     Returns:
             Lista obiektów Price z historycznymi kursami
