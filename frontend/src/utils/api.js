@@ -69,6 +69,9 @@ async function handleUnauthorized() {
   const { updateMenuState } = await import('../components/menu.js');
   updateMenuState(false);
 
+  const { stopNotificationMonitoring } = await import('./notifications.js');
+  stopNotificationMonitoring();
+
   window.location.hash = '#home';
 }
 

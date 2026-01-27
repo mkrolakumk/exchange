@@ -22,7 +22,6 @@ async function showNotification(title, body, tag) {
 
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     const registration = await navigator.serviceWorker.ready;
-    console.log('Wyświetlanie powiadomienia:', title, body);
     await registration.showNotification(title, {
       body,
       icon: '/assets/icons/icon-192.png',
@@ -49,7 +48,6 @@ export async function checkNotificationConditions() {
   if (!isLoggedIn) return;
 
   try {
-    console.log('Sprawdzanie warunków powiadomień...');
     const notifications = await fetchNotifications();
 
     if (notifications.length === 0) return;
@@ -98,9 +96,22 @@ export async function checkNotificationConditions() {
   }
 }
 
+let notificationInterval = null;
+
 export function startNotificationMonitoring() {
+  if (notificationInterval !== null) {
+    return;
+  }
+
   checkNotificationConditions();
-  setInterval(() => {
+  notificationInterval = setInterval(() => {
     checkNotificationConditions();
   }, 30000);
+}
+
+export function stopNotificationMonitoring() {
+  if (notificationInterval !== null) {
+    clearInterval(notificationInterval);
+    notificationInterval = null;
+  }
 }

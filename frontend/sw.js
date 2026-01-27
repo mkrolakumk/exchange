@@ -116,16 +116,15 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Obsługa kliknięć w powiadomienia push
 self.addEventListener('notificationclick', (event) => {
   console.log('Kliknięto powiadomienie:', event.notification.title);
   event.notification.close();
 
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url === self.location.origin + '/' && 'focus' in client) {
-          console.log('Fokus na istniejącą kartę');
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          console.log('Fokus na istniejącą kartę:', client.url);
           return client.focus();
         }
       }

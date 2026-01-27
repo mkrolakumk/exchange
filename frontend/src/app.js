@@ -14,7 +14,7 @@ import {
 } from './utils/api.js';
 import { setupMenu, updateMenuState } from './components/menu.js';
 import { createAuthModal } from './components/modal.js';
-import { startNotificationMonitoring } from './utils/notifications.js';
+import { startNotificationMonitoring, stopNotificationMonitoring } from './utils/notifications.js';
 import { install } from './utils/install.js';
 import { onboarding } from './utils/onboarding.js';
 import { operationsQueue } from './utils/queue.js';
@@ -32,6 +32,11 @@ async function updateConnectionStatus() {
   if (previousOnlineStatus === false && status.isOnline === true) {
     const currentPath = window.location.hash.slice(1) || 'home';
     router.navigate(currentPath);
+
+    const isLoggedIn = await state.isLoggedIn();
+    if (isLoggedIn) {
+      startNotificationMonitoring();
+    }
   }
 
   previousOnlineStatus = status.isOnline;
@@ -99,12 +104,14 @@ async function handleAuth(data) {
   await state.setUser(userData);
 
   updateMenuState(true);
+  startNotificationMonitoring();
   router.navigate('home');
 }
 
 async function handleLogout() {
   await logoutUser();
   await state.clearAuth();
+  stopNotificationMonitoring();
   updateMenuState(false);
   router.navigate('home');
 }
