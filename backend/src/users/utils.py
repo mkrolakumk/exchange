@@ -67,6 +67,6 @@ async def authenticate_user(email: str, password: str, response: Response, sessi
         httponly=True,
         max_age=86400,
         samesite="lax",
-        secure=False
+        secure=True
     )
     return user
