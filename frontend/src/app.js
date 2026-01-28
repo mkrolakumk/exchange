@@ -45,7 +45,7 @@ async function updateConnectionStatus() {
   if (!statusText) return;
 
   if (status.isOnline) {
-    statusText.textContent = 'Online';
+    statusText.textContent = '';
   } else {
     const age = await backendStatus.getLastOnlineAge();
     const minutes = Math.floor(age / 60000);

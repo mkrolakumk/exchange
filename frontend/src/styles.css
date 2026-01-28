@@ -381,13 +381,17 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 1.5rem;
-  opacity: 0.5;
   transition: opacity 0.2s, border-color 0.2s;
 }
 
 .balance-card.has-balance {
-  opacity: 1;
   border-color: var(--blue);
+}
+
+.balance-card:not(.has-balance) .balance-currency,
+.balance-card:not(.has-balance) .balance-name,
+.balance-card:not(.has-balance) .balance-amount {
+  opacity: 0.6;
 }
 
 .balance-currency {
@@ -746,7 +750,7 @@ button:disabled {
   }
 
   header {
-    padding: 0.75rem;
+    padding: calc(0.75rem + var(--safe-top)) calc(0.75rem + var(--safe-right)) 0.75rem calc(0.75rem + var(--safe-left));
   }
 
   header h1 {
@@ -762,7 +766,7 @@ button:disabled {
   }
 
   .price-row {
-    grid-template-columns: 30px 1fr 60px;
+    grid-template-columns: 30px minmax(0, 1fr) 60px;
     grid-template-rows: auto auto auto;
     gap: 0.75rem;
     padding: 0.75rem;
@@ -810,14 +814,17 @@ button:disabled {
     grid-column: 1 / -1;
     grid-row: 3;
     gap: 0.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .btn-buy,
   .btn-sell {
-    padding: 0.625rem;
+    padding: 0.75rem;
     font-size: 0.875rem;
     min-height: 44px;
-    max-width: 120px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
   }
 
   .balance-grid {
@@ -851,6 +858,12 @@ button:disabled {
     min-width: 160px;
     order: -1;
     width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .price-actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -919,9 +932,10 @@ button:disabled {
 
 .price-row {
   display: grid;
-  grid-template-columns: 30px 2fr 1fr 1fr 1fr 50px;
+  grid-template-columns: 30px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 50px;
   gap: 1rem;
   align-items: center;
+  justify-items: stretch;
   padding: 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -979,15 +993,30 @@ button:disabled {
 }
 
 .price-actions {
-  display: flex;
-  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+  align-items: stretch;
+  justify-self: stretch;
+  min-width: 0;
 }
 
 .btn-buy,
 .btn-sell {
-  flex: 1;
-  padding: 0.5rem;
+  padding: 0.625rem;
   font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  touch-action: manipulation;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .btn-buy {

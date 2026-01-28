@@ -115,6 +115,8 @@ export async function createCurrencyRow({
   if (isLoggedIn) {
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'price-actions';
+    actionsDiv.addEventListener('click', (e) => e.stopPropagation());
+    actionsDiv.addEventListener('touchstart', (e) => e.stopPropagation());
 
     const buyBtn = document.createElement('button');
     buyBtn.className = 'btn-buy';

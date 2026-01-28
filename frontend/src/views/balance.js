@@ -35,7 +35,8 @@ export function createBalanceView() {
 
       clearContainer();
       const currencies = await prepareDisplayCurrencies(balanceData, currenciesData);
-      renderBalanceView(currencies, balanceData);
+      const status = await backendStatus.getStatus();
+      renderBalanceView(currencies, balanceData, status.isOnline);
     } catch (error) {
       console.error('Błąd ładowania danych:', error);
       clearContainer();
@@ -217,7 +218,7 @@ export function createBalanceView() {
     }
   }
 
-  function createBalanceCard(currency) {
+  function createBalanceCard(currency, isOnline) {
     const card = document.createElement('div');
     card.className = `balance-card${currency.hasBalance ? ' has-balance' : ''}`;
 
@@ -240,6 +241,7 @@ export function createBalanceView() {
     depositBtn.className = 'btn-deposit';
     depositBtn.textContent = 'Wpłać';
     depositBtn.type = 'button';
+    depositBtn.disabled = !isOnline;
 
     const withdrawBtn = document.createElement('button');
     withdrawBtn.className = 'btn-withdraw';
@@ -269,7 +271,7 @@ export function createBalanceView() {
     return card;
   }
 
-  function renderBalanceView(currencies, balanceData) {
+  function renderBalanceView(currencies, balanceData, isOnline) {
     const title = document.createElement('h2');
     title.className = 'balance-title';
     title.textContent = 'Twoje Środki';
@@ -278,7 +280,7 @@ export function createBalanceView() {
     grid.className = 'balance-grid';
 
     currencies.forEach((currency) => {
-      const card = createBalanceCard(currency);
+      const card = createBalanceCard(currency, isOnline);
       grid.appendChild(card);
     });
 

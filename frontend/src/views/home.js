@@ -1,4 +1,4 @@
-import { fetchCurrencies, fetchPrices, checkBackendStatus, backendStatus } from '../utils/api.js';
+import { fetchCurrencies, fetchPrices } from '../utils/api.js';
 import { state } from '../state.js';
 import { createCurrencyRow } from '../components/currencyRow.js';
 import { checkAndUpdateLocalCurrency } from '../utils/geolocation.js';
@@ -27,12 +27,6 @@ export function createHomeView() {
     const title = document.createElement('h1');
     title.textContent = 'Waluty świata';
     container.appendChild(title);
-
-    const status = document.createElement('p');
-    status.id = 'status';
-    status.className = 'hidden';
-    status.textContent = 'Sprawdzanie statusu...';
-    container.appendChild(status);
 
     const searchContainer = document.createElement('div');
     searchContainer.className = 'search-container';
@@ -71,7 +65,6 @@ export function createHomeView() {
       await state.setCurrencies(currencies);
       await state.setPrices(prices);
       renderData(currencies, prices, previousPrices);
-      checkStatus();
     } catch (error) {
       console.error('Błąd:', error);
       const message = error.isNetworkError
@@ -97,17 +90,6 @@ export function createHomeView() {
         console.error('Błąd aktualizacji cen:', error);
       }
     }, 900);
-  }
-
-  async function checkStatus() {
-    await checkBackendStatus();
-    const status = await backendStatus.getStatus();
-    const statusText = status.isOnline ? 'Online' : 'Offline';
-    const statusEl = document.getElementById('status');
-    if (statusEl) {
-      statusEl.textContent = statusText;
-      statusEl.className = status.isOnline ? 'online' : 'offline';
-    }
   }
 
   async function renderData(currencies, prices, previousPrices = []) {
