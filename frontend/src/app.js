@@ -122,6 +122,13 @@ async function init() {
 
   authModal = createAuthModal();
 
+  const headerTitle = document.querySelector('header h1');
+  if (headerTitle) {
+    headerTitle.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
+
   setupMenu((action) => {
     if (action === 'showLogin') {
       authModal.show('login', handleAuth);

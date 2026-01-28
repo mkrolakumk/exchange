@@ -213,6 +213,7 @@ body.offline #status-text {
   padding: 1rem;
   font-weight: 700;
   border-bottom: 1px solid var(--border);
+  color: var(--blue);
 }
 
 .menu-item {

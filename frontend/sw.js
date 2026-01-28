@@ -32,27 +32,45 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => {
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => {
+        console.log('Service Worker zainstalowany, zasoby statyczne zapisane w cache.');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('Błąd podczas cachowania statycznych zasobów:', error);
+      })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys
-          .filter(
-            (key) =>
-              key.startsWith('exchange-cache-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE
-          )
-          .map((key) => caches.delete(key))
-      );
-    })
+    caches
+      .keys()
+      .then((keys) => {
+        return Promise.all(
+          keys
+            .filter(
+              (key) =>
+                key.startsWith('exchange-cache-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE
+            )
+            .map((key) => caches.delete(key))
+        );
+      })
+      .then(() => {
+        console.log('Service Worker aktywowany, stare cache usunięte.');
+      })
+      .then(() => {
+        return self.clients.claim();
+      })
+      .catch((error) => {
+        console.error('Błąd podczas usuwania starych cache:', error);
+      })
   );
-  return self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
