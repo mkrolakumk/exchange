@@ -817,6 +817,7 @@ button:disabled {
     padding: 0.625rem;
     font-size: 0.875rem;
     min-height: 44px;
+    max-width: 120px;
   }
 
   .balance-grid {
