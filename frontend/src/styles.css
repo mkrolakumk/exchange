@@ -831,6 +831,15 @@ button:disabled {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
+  .balance-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+  }
+
   .confirm-dialog {
     max-width: 90%;
   }
