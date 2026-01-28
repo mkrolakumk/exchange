@@ -1,12 +1,18 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production || npm install --only=production || true
 COPY . .
-RUN mkdir -p dist && cp -r * dist/ 2>/dev/null || true
+RUN npm install esbuild
+RUN mkdir -p dist/src && \
+    cp index.html manifest.webmanifest dist/ && \
+    cp -r assets dist/ && \
+    npx esbuild sw.js --minify --minify-identifiers --outfile=dist/sw.js && \
+    npx esbuild src/styles.css --minify --outfile=dist/src/styles.css && \
+    for file in $(find src -name "*.js"); do \
+    npx esbuild "$file" --minify --minify-identifiers --outfile="dist/$file"; \
+    done
 
 FROM nginx:alpine
-COPY --from=builder /app /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY nginx-aws.conf /etc/nginx/nginx-aws.conf
 RUN echo '#!/bin/sh' > /docker-entrypoint.d/40-setup-nginx.sh && \
