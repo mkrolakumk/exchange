@@ -1387,6 +1387,9 @@ button:disabled {
   color: var(--muted);
   border: 1px solid var(--border);
 }
+.price-row {
+  grid-template-columns: 30px 2fr 1fr 1fr  1fr;
+}
 
 @media (max-width: 640px) {
   .install-content {
@@ -1446,7 +1449,9 @@ button:disabled {
   border-radius: 6px;
   z-index: 150;
 }
-
+.price-row {
+  grid-template-columns: 30px 2fr 1fr 1fr  1fr;
+}
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
