@@ -977,6 +977,7 @@ button:disabled {
 .currency-name {
   font-size: 0.75rem;
   color: var(--muted);
+  text-overflow: ellipsis;
 }
 
 .price-value {
