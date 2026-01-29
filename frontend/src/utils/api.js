@@ -1,4 +1,5 @@
 import { getFromDB, saveToDB } from './db.js';
+import { state } from '../state.js';
 
 function getApiBase() {
   const injectedUrl = '__API_URL__';
@@ -221,6 +222,7 @@ export async function fetchBalance() {
   if (!response.ok) throw new Error('Nie udało się pobrać salda');
   let balance = await response.json();
   console.log('Saldo pobrane pomyślnie!', balance);
+  await state.setBalanceData(balance);
   return balance;
 }
 
@@ -282,7 +284,9 @@ export async function buyCurrency(currencyCode, amount) {
     throw new Error(error.detail || 'Błąd kupna waluty');
   }
   console.log('Waluta kupiona pomyślnie!');
-  return response.json();
+  const result = await response.json();
+  await fetchBalance();
+  return result;
 }
 
 export async function sellCurrency(currencyCode, amount) {
@@ -300,7 +304,9 @@ export async function sellCurrency(currencyCode, amount) {
     throw new Error(error.detail || 'Błąd sprzedaży waluty');
   }
   console.log('Waluta sprzedana pomyślnie!');
-  return response.json();
+  const result = await response.json();
+  await fetchBalance();
+  return result;
 }
 
 export async function fetchCurrencyHistory(currencyCode, days, signal) {

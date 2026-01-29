@@ -1,4 +1,4 @@
-import { fetchCurrencies, fetchPrices } from '../utils/api.js';
+import { fetchCurrencies, fetchPrices, fetchBalance } from '../utils/api.js';
 import { state } from '../state.js';
 import { createCurrencyRow } from '../components/currencyRow.js';
 import { checkAndUpdateLocalCurrency } from '../utils/geolocation.js';
@@ -64,6 +64,16 @@ export function createHomeView() {
       const previousPrices = (await state.getPreviousPrices()) || [];
       await state.setCurrencies(currencies);
       await state.setPrices(prices);
+
+      const isLoggedIn = await state.isLoggedIn();
+      if (isLoggedIn) {
+        try {
+          await fetchBalance();
+        } catch (error) {
+          console.error('Błąd pobierania salda:', error);
+        }
+      }
+
       renderData(currencies, prices, previousPrices);
     } catch (error) {
       console.error('Błąd:', error);

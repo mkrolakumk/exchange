@@ -3,6 +3,8 @@ import { getFromDB, saveToDB, deleteFromDB } from './utils/db.js';
 export const state = {
   async clearAuth() {
     await deleteFromDB('userData');
+    await deleteFromDB('balanceData');
+    await deleteFromDB('pending_operations');
   },
 
   async isLoggedIn() {

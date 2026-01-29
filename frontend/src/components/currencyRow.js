@@ -194,74 +194,77 @@ export async function createCurrencyRow({
     sellBtn.textContent = 'Sprzedaj';
     sellBtn.dataset.code = currencyCode;
     sellBtn.dataset.rate = priceSell;
-    if (balance === 0) {
-      sellBtn.disabled = true;
-    } else {
-      sellBtn.onclick = async (e) => {
-        e.stopPropagation();
+    sellBtn.disabled = balance === 0;
 
-        const status = await backendStatus.getStatus();
-        if (!status.isOnline) {
-          await confirmDialog.alert(
-            'Brak połączenia',
-            'Nie można sprzedać waluty - brak połączenia z serwerem. Spróbuj ponownie później.'
-          );
-          return;
-        }
+    sellBtn.onclick = async (e) => {
+      e.stopPropagation();
 
-        const amountStr = await confirmDialog.prompt(
-          `Sprzedaj ${currencyCode}`,
-          `Masz: ${balance.toFixed(2)} ${currencyCode}. Wprowadź kwotę do sprzedaży (po ${Number(
-            priceSell
-          ).toFixed(4)} PLN za jednostkę):`,
-          {
-            inputType: 'number',
-            placeholder: '0.00',
-            step: '0.01',
-            min: '0.01',
-            max: balance.toString(),
-            validator: (value) => {
-              if (!value) return { valid: false, message: 'Kwota jest wymagana' };
-              const amount = parseFloat(value);
-              if (isNaN(amount) || amount <= 0) {
-                return { valid: false, message: 'Kwota musi być większa od 0' };
-              }
-              if (amount > balance) {
-                return { valid: false, message: 'Niewystarczające środki' };
-              }
-              if (!/^\d+(\.\d{1,2})?$/.test(value)) {
-                return { valid: false, message: 'Maksymalnie 2 miejsca po przecinku' };
-              }
-              return { valid: true, value: amount };
-            },
-          }
+      if (balance <= 0) {
+        await confirmDialog.alert('Brak środków', 'Nie masz środków do sprzedaży tej waluty.');
+        return;
+      }
+
+      const status = await backendStatus.getStatus();
+      if (!status.isOnline) {
+        await confirmDialog.alert(
+          'Brak połączenia',
+          'Nie można sprzedać waluty - brak połączenia z serwerem. Spróbuj ponownie później.'
         );
+        return;
+      }
 
-        if (amountStr === null) return;
-
-        try {
-          await sellCurrency(currencyCode, amountStr);
-          await confirmDialog.alert('Sukces', `Sprzedano ${amountStr} ${currencyCode}`);
-          if (onTransactionComplete) {
-            await onTransactionComplete();
-          }
-        } catch (error) {
-          console.error('Błąd sprzedaży:', error);
-          let errorMessage = 'Nie udało się wykonać transakcji';
-          if (
-            error.isNetworkError ||
-            error.message.includes('Brak połączenia') ||
-            error.message.includes('Serwer tymczasowo niedostępny')
-          ) {
-            errorMessage =
-              'Brak połączenia z serwerem. Sprawdź połączenie internetowe i spróbuj ponownie.';
-          } else if (error.message) {
-            errorMessage = error.message;
-          }
-          await confirmDialog.alert('Błąd', errorMessage);
+      const amountStr = await confirmDialog.prompt(
+        `Sprzedaj ${currencyCode}`,
+        `Masz: ${balance.toFixed(2)} ${currencyCode}. Wprowadź kwotę do sprzedaży (po ${Number(
+          priceSell
+        ).toFixed(4)} PLN za jednostkę):`,
+        {
+          inputType: 'number',
+          placeholder: '0.00',
+          step: '0.01',
+          min: '0.01',
+          max: balance.toString(),
+          validator: (value) => {
+            if (!value) return { valid: false, message: 'Kwota jest wymagana' };
+            const amount = parseFloat(value);
+            if (isNaN(amount) || amount <= 0) {
+              return { valid: false, message: 'Kwota musi być większa od 0' };
+            }
+            if (amount > balance) {
+              return { valid: false, message: 'Niewystarczające środki' };
+            }
+            if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+              return { valid: false, message: 'Maksymalnie 2 miejsca po przecinku' };
+            }
+            return { valid: true, value: amount };
+          },
         }
-      };
-    }
+      );
+
+      if (amountStr === null) return;
+
+      try {
+        await sellCurrency(currencyCode, amountStr);
+        await confirmDialog.alert('Sukces', `Sprzedano ${amountStr} ${currencyCode}`);
+        if (onTransactionComplete) {
+          await onTransactionComplete();
+        }
+      } catch (error) {
+        console.error('Błąd sprzedaży:', error);
+        let errorMessage = 'Nie udało się wykonać transakcji';
+        if (
+          error.isNetworkError ||
+          error.message.includes('Brak połączenia') ||
+          error.message.includes('Serwer tymczasowo niedostępny')
+        ) {
+          errorMessage =
+            'Brak połączenia z serwerem. Sprawdź połączenie internetowe i spróbuj ponownie.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        await confirmDialog.alert('Błąd', errorMessage);
+      }
+    };
 
     actionsDiv.appendChild(buyBtn);
     actionsDiv.appendChild(sellBtn);
@@ -373,6 +376,7 @@ export async function createCurrencyRow({
 
     try {
       const newBalance = await state.getBalance(currencyCode);
+      balance = newBalance || 0;
       const existingBalanceDiv = currencyDiv.querySelector('.user-balance');
 
       if (newBalance > 0) {

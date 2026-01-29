@@ -11,6 +11,7 @@ import {
   getUserMe,
   checkBackendStatus,
   backendStatus,
+  fetchBalance,
 } from './utils/api.js';
 import { setupMenu, updateMenuState } from './components/menu.js';
 import { createAuthModal } from './components/modal.js';
@@ -102,6 +103,12 @@ async function handleAuth(data) {
 
   const userData = await getUserMe();
   await state.setUser(userData);
+
+  try {
+    await fetchBalance();
+  } catch (error) {
+    console.error('Błąd pobierania salda po zalogowaniu:', error);
+  }
 
   updateMenuState(true);
   startNotificationMonitoring();
