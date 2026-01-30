@@ -22,12 +22,23 @@ async function getPositionFromNative(options) {
   }
 
   try {
-    if (nativeGeolocation.checkPermissions && nativeGeolocation.requestPermissions) {
-      const permissions = await nativeGeolocation.checkPermissions();
-      const isGranted =
-        permissions?.location === 'granted' || permissions?.coarseLocation === 'granted';
+    if (nativeGeolocation.requestPermissions) {
+      if (nativeGeolocation.checkPermissions) {
+        const permissions = await nativeGeolocation.checkPermissions();
+        const isGranted =
+          permissions?.location === 'granted' || permissions?.coarseLocation === 'granted';
 
-      if (!isGranted) {
+        if (!isGranted) {
+          const requestResult = await nativeGeolocation.requestPermissions();
+          const grantedAfterRequest =
+            requestResult?.location === 'granted' || requestResult?.coarseLocation === 'granted';
+
+          if (!grantedAfterRequest) {
+            console.log('Użytkownik odmówił dostępu do lokalizacji (native)');
+            return null;
+          }
+        }
+      } else {
         const requestResult = await nativeGeolocation.requestPermissions();
         const grantedAfterRequest =
           requestResult?.location === 'granted' || requestResult?.coarseLocation === 'granted';
