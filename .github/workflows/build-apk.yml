@@ -43,7 +43,7 @@ jobs:
         working-directory: ./frontend
         run: |
           npm init -y
-          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/local-notifications
+          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/local-notifications @capacitor/geolocation
           npx cap init "Kantor" "pl.kantor.app" --web-dir www
 
       - name: Configure server URL (optional)
