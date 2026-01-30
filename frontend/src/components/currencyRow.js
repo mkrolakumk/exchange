@@ -273,8 +273,14 @@ export async function createCurrencyRow({
 
   row.appendChild(expandDiv);
 
-  row.onclick = (e) => {
+  row.onclick = async (e) => {
     if (e.target.closest('.btn-buy, .btn-sell')) return;
+
+    const status = await backendStatus.getStatus();
+    if (!status.isOnline) {
+      return;
+    }
+
     toggleChart();
   };
 

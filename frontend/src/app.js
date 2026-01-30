@@ -71,29 +71,6 @@ async function processQueueIfOnline() {
   }
 }
 
-function checkConnectionQuality() {
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const banner = document.getElementById('slow-connection-banner');
-
-  if (!connection) return;
-
-  const slowTypes = ['slow-2g', '2g', '3g'];
-  const isSlow = slowTypes.includes(connection.effectiveType) || !navigator.onLine;
-
-  if (isSlow && !banner) {
-    const newBanner = document.createElement('div');
-    newBanner.id = 'slow-connection-banner';
-    newBanner.className = 'slow-connection-warning';
-    newBanner.innerHTML =
-      '<p>⚠️ Wykryto wolne łącze. Nie jesteśmy w stanie zagwarantować aktualności danych.</p>';
-    document.body.insertBefore(newBanner, document.body.firstChild);
-    document.body.style.paddingTop = '120px';
-  } else if (!isSlow && banner) {
-    banner.remove();
-    document.body.style.paddingTop = '80px';
-  }
-}
-
 async function handleAuth(data) {
   if (data.mode === 'register') {
     await registerUser(data.email, data.password, data.firstName, data.lastName);
@@ -167,12 +144,6 @@ async function init() {
   updateConnectionStatus();
   setInterval(updateConnectionStatus, 5000);
   setInterval(processQueueIfOnline, 20000);
-
-  checkConnectionQuality();
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (connection) {
-    connection.addEventListener('change', checkConnectionQuality);
-  }
 
   install.init();
 
