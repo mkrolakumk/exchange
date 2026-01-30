@@ -59,6 +59,19 @@ jobs:
         working-directory: ./frontend
         run: npx cap sync android
 
+      - name: Add Geolocation Permissions to AndroidManifest.xml
+        working-directory: ./frontend/android/app/src/main
+        run: |
+          # Backup original manifest
+          cp AndroidManifest.xml AndroidManifest.xml.bak
+          
+          # Add location permissions before </manifest> closing tag
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />' AndroidManifest.xml
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />' AndroidManifest.xml
+          
+          echo "AndroidManifest.xml updated with geolocation permissions"
+          cat AndroidManifest.xml
+
       - name: Build Debug APK (signed automatically with debug key)
         working-directory: ./frontend/android
         run: |
