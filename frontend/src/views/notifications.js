@@ -1,6 +1,10 @@
 import { state } from '../state.js';
 import { fetchNotifications, updateNotifications, fetchCurrencies } from '../utils/api.js';
 import { createConfirmDialog } from '../components/confirm.js';
+import {
+  getNotificationPermission,
+  requestNotificationPermission,
+} from '../utils/notifications.js';
 
 export function createNotificationsView() {
   let container = null;
@@ -26,8 +30,7 @@ export function createNotificationsView() {
         .filter(([code]) => code !== 'PLN')
         .map(([code, info]) => ({ code, name: info.name }));
 
-      const notificationPermission =
-        'Notification' in window ? Notification.permission : 'unsupported';
+      const notificationPermission = await getNotificationPermission();
 
       const permissionBanner = renderPermissionBanner(notificationPermission);
       const notificationsTable = renderNotificationsTable(notifications, currenciesData);
@@ -359,13 +362,6 @@ export function createNotificationsView() {
     } catch (err) {
       await confirmDialog.alert('Błąd', 'Błąd podczas usuwania powiadomienia: ' + err.message);
     }
-  }
-
-  async function requestNotificationPermission() {
-    if (!('Notification' in window)) return 'unsupported';
-    if (Notification.permission === 'granted') return 'granted';
-    if (Notification.permission === 'denied') return 'denied';
-    return await Notification.requestPermission();
   }
 
   function destroy() {

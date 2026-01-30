@@ -1,11 +1,90 @@
 import { state } from '../state.js';
 import { fetchPrices, fetchNotifications, fetchCurrencies } from '../utils/api.js';
 
+function getNativeLocalNotifications() {
+  const capacitor = window?.Capacitor;
+  if (!capacitor || typeof capacitor.isNativePlatform !== 'function') {
+    return null;
+  }
+
+  if (!capacitor.isNativePlatform()) {
+    return null;
+  }
+
+  const plugins = capacitor.Plugins || capacitor.plugins;
+  return plugins?.LocalNotifications || null;
+}
+
+function mapNativePermission(permission) {
+  if (permission === 'granted') return 'granted';
+  if (permission === 'denied') return 'denied';
+  return 'default';
+}
+
+function getNotificationIdFromTag(tag) {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i += 1) {
+    hash = (hash << 5) - hash + tag.charCodeAt(i);
+    hash |= 0; // 32-bit
+  }
+  return Math.abs(hash || 1);
+}
+
+export async function getNotificationPermission() {
+  const nativeNotifications = getNativeLocalNotifications();
+  if (nativeNotifications?.checkPermissions) {
+    try {
+      const result = await nativeNotifications.checkPermissions();
+      return mapNativePermission(result?.display);
+    } catch (err) {
+      console.warn('Nie udało się sprawdzić uprawnień powiadomień (native):', err);
+    }
+  }
+
+  if ('Notification' in window) {
+    return Notification.permission;
+  }
+
+  return 'unsupported';
+}
+
+export async function requestNotificationPermission() {
+  const nativeNotifications = getNativeLocalNotifications();
+  if (nativeNotifications?.requestPermissions) {
+    try {
+      const result = await nativeNotifications.requestPermissions();
+      return mapNativePermission(result?.display);
+    } catch (err) {
+      console.warn('Nie udało się pobrać uprawnień powiadomień (native):', err);
+      return 'denied';
+    }
+  }
+
+  if (!('Notification' in window)) return 'unsupported';
+  if (Notification.permission === 'granted') return 'granted';
+  if (Notification.permission === 'denied') return 'denied';
+  return await Notification.requestPermission();
+}
+
 function getNotificationTag(notification) {
   return `${notification.currency_code}_${notification.direction}_${notification.threshold}`;
 }
 
 async function isNotificationActive(tag) {
+  const nativeNotifications = getNativeLocalNotifications();
+  if (nativeNotifications?.getPending) {
+    try {
+      const pending = await nativeNotifications.getPending();
+      return (
+        pending?.notifications?.some((notification) =>
+          notification?.extra?.tag ? notification.extra.tag === tag : false
+        ) || false
+      );
+    } catch (err) {
+      console.warn('Nie udało się odczytać oczekujących powiadomień (native):', err);
+    }
+  }
+
   if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
     return false;
   }
@@ -16,6 +95,25 @@ async function isNotificationActive(tag) {
 }
 
 async function showNotification(title, body, tag) {
+  const nativeNotifications = getNativeLocalNotifications();
+  if (nativeNotifications?.schedule) {
+    const permission = await getNotificationPermission();
+    if (permission !== 'granted') return;
+
+    const id = getNotificationIdFromTag(tag);
+    await nativeNotifications.schedule({
+      notifications: [
+        {
+          id,
+          title,
+          body,
+          extra: { tag },
+        },
+      ],
+    });
+    return;
+  }
+
   if (!('Notification' in window) || Notification.permission !== 'granted') {
     return;
   }
@@ -40,9 +138,8 @@ async function showNotification(title, body, tag) {
 }
 
 export async function checkNotificationConditions() {
-  if (!('Notification' in window) || Notification.permission !== 'granted') {
-    return;
-  }
+  const permission = await getNotificationPermission();
+  if (permission !== 'granted') return;
 
   const isLoggedIn = await state.isLoggedIn();
   if (!isLoggedIn) return;

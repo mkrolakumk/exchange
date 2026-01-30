@@ -43,7 +43,7 @@ jobs:
         working-directory: ./frontend
         run: |
           npm init -y
-          npm install @capacitor/cli @capacitor/core @capacitor/android
+          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/local-notifications
           npx cap init "Kantor" "pl.kantor.app" --web-dir www
 
       - name: Configure server URL (optional)
@@ -55,9 +55,9 @@ jobs:
         working-directory: ./frontend
         run: npx cap add android
 
-      - name: Copy web assets to Android
+      - name: Sync Capacitor (plugins + assets)
         working-directory: ./frontend
-        run: npx cap copy android
+        run: npx cap sync android
 
       - name: Build Debug APK (signed automatically with debug key)
         working-directory: ./frontend/android
