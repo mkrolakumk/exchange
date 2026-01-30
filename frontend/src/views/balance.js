@@ -36,6 +36,9 @@ export function createBalanceView() {
       clearContainer();
       const currencies = await prepareDisplayCurrencies(balanceData, currenciesData);
       const status = await backendStatus.getStatus();
+      if (!status.isOnline) {
+        renderOfflineBanner();
+      }
       renderBalanceView(currencies, balanceData, status.isOnline);
     } catch (error) {
       console.error('Błąd ładowania danych:', error);
@@ -293,6 +296,13 @@ export function createBalanceView() {
     errorEl.className = 'warning';
     errorEl.textContent = message;
     container.appendChild(errorEl);
+  }
+
+  function renderOfflineBanner() {
+    const banner = document.createElement('div');
+    banner.className = 'offline-banner';
+    banner.textContent = 'Jesteś offline - pokazuję zapisane dane';
+    container.appendChild(banner);
   }
 
   function showLoader() {

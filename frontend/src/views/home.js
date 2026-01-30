@@ -1,4 +1,11 @@
-import { fetchCurrencies, fetchPrices, fetchBalance } from '../utils/api.js';
+import {
+  fetchCurrencies,
+  fetchPrices,
+  fetchBalance,
+  fetchNotifications,
+  fetchTrades,
+  backendStatus,
+} from '../utils/api.js';
 import { state } from '../state.js';
 import { createCurrencyRow } from '../components/currencyRow.js';
 import { checkAndUpdateLocalCurrency } from '../utils/geolocation.js';
@@ -72,9 +79,20 @@ export function createHomeView() {
         } catch (error) {
           console.error('Błąd pobierania salda:', error);
         }
+        try {
+          await fetchNotifications();
+        } catch (error) {
+          console.error('Błąd pobierania powiadomień:', error);
+        }
+        try {
+          await fetchTrades(1);
+        } catch (error) {
+          console.error('Błąd pobierania transakcji:', error);
+        }
       }
 
-      renderData(currencies, prices, previousPrices);
+      const status = await backendStatus.getStatus();
+      renderData(currencies, prices, previousPrices, !status.isOnline);
     } catch (error) {
       console.error('Błąd:', error);
       const message = error.isNetworkError
@@ -96,18 +114,29 @@ export function createHomeView() {
         const previousPrices = (await state.getPreviousPrices()) || [];
         await state.setPrices(prices);
         updatePrices(prices, previousPrices);
+
+        const status = await backendStatus.getStatus();
+        updateOfflineBanner(!status.isOnline);
       } catch (error) {
         console.error('Błąd aktualizacji cen:', error);
+        updateOfflineBanner(true);
       }
     }, 900);
   }
 
-  async function renderData(currencies, prices, previousPrices = []) {
+  async function renderData(currencies, prices, previousPrices = [], isOffline = false) {
     const list = document.getElementById('currency-list');
     list.textContent = '';
     priceElements = { buy: [], sell: [] };
     currencyRows.clear();
     wrappers = [];
+
+    if (isOffline) {
+      const offlineBanner = document.createElement('div');
+      offlineBanner.className = 'offline-banner';
+      offlineBanner.textContent = 'Jesteś offline - pokazuję zapisane dane';
+      list.parentNode.insertBefore(offlineBanner, list);
+    }
 
     const isLoggedIn = await state.isLoggedIn();
 
@@ -227,6 +256,22 @@ export function createHomeView() {
     errorEl.className = 'warning';
     errorEl.textContent = message;
     container.appendChild(errorEl);
+  }
+
+  function updateOfflineBanner(isOffline) {
+    const list = document.getElementById('currency-list');
+    if (!list) return;
+
+    const existingBanner = list.parentNode.querySelector('.offline-banner');
+
+    if (isOffline && !existingBanner) {
+      const offlineBanner = document.createElement('div');
+      offlineBanner.className = 'offline-banner';
+      offlineBanner.textContent = 'Jesteś offline - pokazuję zapisane dane';
+      list.parentNode.insertBefore(offlineBanner, list);
+    } else if (!isOffline && existingBanner) {
+      existingBanner.remove();
+    }
   }
 
   return {

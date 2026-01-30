@@ -1,5 +1,10 @@
 import { state } from '../state.js';
-import { fetchNotifications, updateNotifications, fetchCurrencies } from '../utils/api.js';
+import {
+  fetchNotifications,
+  updateNotifications,
+  fetchCurrencies,
+  backendStatus,
+} from '../utils/api.js';
 import { createConfirmDialog } from '../components/confirm.js';
 import {
   getNotificationPermission,
@@ -42,6 +47,14 @@ export function createNotificationsView() {
       const title = document.createElement('h2');
       title.textContent = 'Powiadomienia';
       card.appendChild(title);
+
+      const status = await backendStatus.getStatus();
+      if (!status.isOnline) {
+        const offlineBanner = document.createElement('div');
+        offlineBanner.className = 'offline-banner';
+        offlineBanner.textContent = 'Jesteś offline - pokazuję zapisane dane';
+        card.appendChild(offlineBanner);
+      }
 
       if (permissionBanner) {
         card.appendChild(permissionBanner);

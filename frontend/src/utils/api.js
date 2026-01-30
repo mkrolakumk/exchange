@@ -200,17 +200,45 @@ export async function getUserMe() {
   return response.json();
 }
 export async function fetchCurrencies() {
-  const response = await apiFetch(`${API_BASE}/currencies/`);
-  if (!response.ok) throw new Error('Nie udało się pobrać walut');
-  console.log('Waluty pobrane pomyślnie!');
-  return response.json();
+  try {
+    const response = await apiFetch(`${API_BASE}/currencies/`);
+    if (!response.ok) throw new Error('Nie udało się pobrać walut');
+    console.log('Waluty pobrane pomyślnie!');
+    const data = await response.json();
+    await state.setCurrencies(Object.values(data));
+    return data;
+  } catch (error) {
+    if (error.isNetworkError) {
+      const cached = await state.getCurrencies();
+      if (cached?.length > 0) {
+        const currenciesObj = {};
+        cached.forEach((c) => {
+          currenciesObj[c.code] = c;
+        });
+        return currenciesObj;
+      }
+    }
+    throw error;
+  }
 }
 
 export async function fetchPrices() {
-  const response = await apiFetch(`${API_BASE}/currencies/prices`);
-  if (!response.ok) throw new Error('Nie udało się pobrać cen');
-  console.log('Ceny walut pobrane pomyślnie!');
-  return response.json();
+  try {
+    const response = await apiFetch(`${API_BASE}/currencies/prices`);
+    if (!response.ok) throw new Error('Nie udało się pobrać cen');
+    console.log('Ceny walut pobrane pomyślnie!');
+    const data = await response.json();
+    await state.setPrices(data);
+    return data;
+  } catch (error) {
+    if (error.isNetworkError) {
+      const cached = await state.getPrices();
+      if (cached?.length > 0) {
+        return cached;
+      }
+    }
+    throw error;
+  }
 }
 
 export async function checkBackendStatus() {
@@ -218,12 +246,22 @@ export async function checkBackendStatus() {
 }
 
 export async function fetchBalance() {
-  const response = await apiFetch(`${API_BASE}/balance/balance`);
-  if (!response.ok) throw new Error('Nie udało się pobrać salda');
-  let balance = await response.json();
-  console.log('Saldo pobrane pomyślnie!', balance);
-  await state.setBalanceData(balance);
-  return balance;
+  try {
+    const response = await apiFetch(`${API_BASE}/balance/balance`);
+    if (!response.ok) throw new Error('Nie udało się pobrać salda');
+    let balance = await response.json();
+    console.log('Saldo pobrane pomyślnie!', balance);
+    await state.setBalanceData(balance);
+    return balance;
+  } catch (error) {
+    if (error.isNetworkError) {
+      const cached = await state.getBalanceData();
+      if (cached && Object.keys(cached).length > 0) {
+        return cached;
+      }
+    }
+    throw error;
+  }
 }
 
 export async function depositBalance(currencyCode, amount) {
@@ -263,10 +301,23 @@ export async function withdrawBalance(currencyCode, amount, bankAccount) {
 }
 
 export async function fetchTrades(page = 1) {
-  const response = await apiFetch(`${API_BASE}/trades/trades?page=${page}`);
-  if (!response.ok) throw new Error('Nie udało się pobrać historii transakcji');
-  console.log('Historia transakcji pobrana pomyślnie!');
-  return response.json();
+  try {
+    const response = await apiFetch(`${API_BASE}/trades/trades?page=${page}`);
+    if (!response.ok) throw new Error('Nie udało się pobrać historii transakcji');
+    console.log('Historia transakcji pobrana pomyślnie!');
+    const data = await response.json();
+    await state.setTrades(data);
+    return data;
+  } catch (error) {
+    if (error.isNetworkError) {
+      const cached = await state.getTrades();
+      if (cached?.trades?.length > 0) {
+        return cached;
+      }
+      return { trades: [], total: 0, page: page, page_size: 10 };
+    }
+    throw error;
+  }
 }
 
 export async function buyCurrency(currencyCode, amount) {
@@ -324,14 +375,26 @@ export async function fetchCurrencyHistory(currencyCode, days, signal) {
 }
 
 export async function fetchNotifications() {
-  const response = await apiFetch(`${API_BASE}/users/preferences/notifications`, {
-    headers: {
-      Accept: 'application/json',
-    },
-  });
-  if (!response.ok) throw new Error('Nie udało się pobrać powiadomień');
-  console.log('Powiadomienia pobrane pomyślnie!');
-  return response.json();
+  try {
+    const response = await apiFetch(`${API_BASE}/users/preferences/notifications`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Nie udało się pobrać powiadomień');
+    console.log('Powiadomienia pobrane pomyślnie!');
+    const data = await response.json();
+    await state.setNotifications(data);
+    return data;
+  } catch (error) {
+    if (error.isNetworkError) {
+      const cached = await state.getNotifications();
+      if (cached && Array.isArray(cached)) {
+        return cached;
+      }
+    }
+    throw error;
+  }
 }
 
 export async function updateNotifications(notifications) {

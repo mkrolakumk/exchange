@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { fetchCurrencies, fetchTrades } from '../utils/api.js';
+import { fetchCurrencies, fetchTrades, backendStatus } from '../utils/api.js';
 
 export function createHistoryView() {
   let container = null;
@@ -45,6 +45,11 @@ export function createHistoryView() {
       clearContainer();
       renderTitle();
 
+      const status = await backendStatus.getStatus();
+      if (!status.isOnline) {
+        renderOfflineBanner();
+      }
+
       if (tradesData.total === 0) {
         renderEmptyState();
       } else {
@@ -56,9 +61,39 @@ export function createHistoryView() {
         renderPagination(tradesData);
       }
     } catch (error) {
-      console.error('Błąd ładowania historii:', error);
-      clearContainer();
-      renderError('Nie udało się załadować historii. Spróbuj ponownie później.');
+      console.error('Błąd ładowania historii:', error.isNetworkError, error);
+
+      if (error.isNetworkError) {
+        const cached = await state.getTrades();
+        const cachedCurrencies = await state.getCurrencies();
+
+        console.log('Cache transakcji:', cached);
+        console.log('Cache walut:', cachedCurrencies);
+
+        if (cached?.trades?.length > 0) {
+          clearContainer();
+          renderTitle();
+          renderOfflineBanner();
+
+          const formattedTrades = cached.trades.map((trade) =>
+            formatTradeData(trade, cachedCurrencies || {})
+          );
+          renderTrades(formattedTrades);
+          isLoading = false;
+
+          if (cached.total) {
+            renderPagination(cached);
+          }
+        } else {
+          clearContainer();
+          renderTitle();
+          renderOfflineBanner();
+          renderEmptyState();
+        }
+      } else {
+        clearContainer();
+        renderError('Nie udało się załadować historii. Spróbuj ponownie później.');
+      }
       isLoading = false;
     }
   }
@@ -258,6 +293,13 @@ export function createHistoryView() {
     errorEl.className = 'warning';
     errorEl.textContent = message;
     container.appendChild(errorEl);
+  }
+
+  function renderOfflineBanner() {
+    const banner = document.createElement('div');
+    banner.className = 'offline-banner';
+    banner.textContent = 'Jesteś offline - pokazuję zapisane dane';
+    container.appendChild(banner);
   }
 
   function clearContainer() {

@@ -5,6 +5,8 @@ export const state = {
     await deleteFromDB('userData');
     await deleteFromDB('balanceData');
     await deleteFromDB('pending_operations');
+    await deleteFromDB('trades');
+    await deleteFromDB('notifications');
   },
 
   async isLoggedIn() {
@@ -64,5 +66,21 @@ export const state = {
       return 0;
     }
     return Number(balanceData[currencyCode].balance || 0);
+  },
+
+  async getTrades() {
+    return await getFromDB('trades');
+  },
+
+  async setTrades(trades) {
+    await saveToDB('trades', trades);
+  },
+
+  async getNotifications() {
+    return await getFromDB('notifications');
+  },
+
+  async setNotifications(notifications) {
+    await saveToDB('notifications', notifications);
   },
 };
