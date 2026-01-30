@@ -1,33 +1,91 @@
 import { saveToDB, getFromDB } from './db.js';
 import { detectCurrency } from './api.js';
 
+function getNativeGeolocation() {
+  const capacitor = window?.Capacitor;
+  if (!capacitor || typeof capacitor.isNativePlatform !== 'function') {
+    return null;
+  }
+
+  if (!capacitor.isNativePlatform()) {
+    return null;
+  }
+
+  const plugins = capacitor.Plugins || capacitor.plugins;
+  return plugins?.Geolocation || null;
+}
+
+async function getPositionFromNative(options) {
+  const nativeGeolocation = getNativeGeolocation();
+  if (!nativeGeolocation?.getCurrentPosition) {
+    return null;
+  }
+
+  try {
+    if (nativeGeolocation.checkPermissions && nativeGeolocation.requestPermissions) {
+      const permissions = await nativeGeolocation.checkPermissions();
+      const isGranted =
+        permissions?.location === 'granted' || permissions?.coarseLocation === 'granted';
+
+      if (!isGranted) {
+        const requestResult = await nativeGeolocation.requestPermissions();
+        const grantedAfterRequest =
+          requestResult?.location === 'granted' || requestResult?.coarseLocation === 'granted';
+
+        if (!grantedAfterRequest) {
+          console.log('Użytkownik odmówił dostępu do lokalizacji (native)');
+          return null;
+        }
+      }
+    }
+
+    return await nativeGeolocation.getCurrentPosition(options);
+  } catch (error) {
+    console.log('Błąd geolokalizacji (native):', error?.message || error);
+    return null;
+  }
+}
+
+async function getPositionFromWeb(options) {
+  if (!('geolocation' in navigator)) {
+    return null;
+  }
+
+  return await new Promise((resolve) => {
+    console.log('Pobieranie pozycji...');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        console.log('Pozycja pobrana:', pos.coords.latitude, pos.coords.longitude);
+        resolve(pos);
+      },
+      (error) => {
+        console.log('Błąd geolokalizacji:', error.code, error.message);
+        if (error.code === 1) {
+          console.log('Użytkownik odmówił dostępu do lokalizacji');
+        }
+        resolve(null);
+      },
+      options
+    );
+  });
+}
+
 export async function checkAndUpdateLocalCurrency() {
   console.log('Sprawdzanie geolokalizacji...');
   try {
     const savedCurrency = await getFromDB('localCurrency');
     console.log('Zapisana waluta:', savedCurrency);
 
-    const position = await new Promise((resolve, reject) => {
-      console.log('Pobieranie pozycji...');
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          console.log('Pozycja pobrana:', pos.coords.latitude, pos.coords.longitude);
-          resolve(pos);
-        },
-        (error) => {
-          console.log('Błąd geolokalizacji:', error.code, error.message);
-          if (error.code === 1) {
-            console.log('Użytkownik odmówił dostępu do lokalizacji');
-          }
-          resolve(null);
-        },
-        {
-          timeout: 60000,
-          maximumAge: 0,
-          enableHighAccuracy: true,
-        }
-      );
-    });
+    const options = {
+      timeout: 60000,
+      maximumAge: 0,
+      enableHighAccuracy: true,
+    };
+
+    let position = await getPositionFromNative(options);
+    if (!position) {
+      position = await getPositionFromWeb(options);
+    }
 
     if (!position) {
       console.log('Brak pozycji, zachowuję obecną walutę');
