@@ -143,7 +143,7 @@ async function init() {
 
   updateConnectionStatus();
   setInterval(updateConnectionStatus, 5000);
-  setInterval(processQueueIfOnline, 20000);
+  setInterval(processQueueIfOnline, 5000);
 
   install.init();
 
