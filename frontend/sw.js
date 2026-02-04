@@ -30,6 +30,7 @@ const STATIC_ASSETS = [
   './assets/icons/icon-512.png',
 ];
 
+// Cache statycznych zasobów podczas instalacji Service Workera, czyli Cache First
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
@@ -47,6 +48,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Usuwanie starych cache podczas aktywacji nowego Service Workera
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
@@ -77,62 +79,43 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Nie obsługuj żądań API - zawsze przepuść do sieci
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
-
-  // Dla metod innych niż GET - przepuść bezpośrednio
+  // Dla metod innych niż GET - przepuść bezpośrednio, Network only
   if (request.method !== 'GET') {
     return;
   }
 
-  // Dla zasobów z tego samego originu (ale NIE /api/*) - cache-first strategy
-  if (url.origin === self.location.origin) {
+  // Zapisz kursy historyczne w cache, czyli Stale-While-Revalidate
+  if (request.url.includes('/api/currencies/history')) {
     event.respondWith(
-      caches
-        .match(request)
-        .then((cachedResponse) => {
-          return (
-            cachedResponse ||
-            fetch(request).then((networkResponse) => {
-              // Cachuj tylko poprawne odpowiedzi
+      caches.open(DYNAMIC_CACHE).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          const fetchPromise = fetch(request)
+            .then((networkResponse) => {
               if (networkResponse && networkResponse.ok) {
-                return caches.open(DYNAMIC_CACHE).then((cache) => {
-                  cache.put(request, networkResponse.clone());
-                  return networkResponse;
-                });
+                cache.put(request, networkResponse.clone());
               }
               return networkResponse;
             })
-          );
-        })
-        .catch(() => {
-          // Fallback do index.html TYLKO dla nawigacji
-          if (request.mode === 'navigate' || request.destination === 'document') {
-            return caches.match('./index.html');
-          }
-          // Dla innych zasobów - brak fallbacku
-          throw new Error('Offline - brak zasobu w cache');
-        })
-    );
-  } else {
-    // Dla zewnętrznych zasobów (np. CDN) - network-first
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response && response.ok) {
-            return caches.open(DYNAMIC_CACHE).then((cache) => {
-              cache.put(request, response.clone());
-              return response;
+            .catch(() => {
+              // Jeśli sieć jest niedostępna, zwróć odpowiedź z cache (jeśli istnieje)
+              return (
+                cachedResponse ||
+                new Response(JSON.stringify({ error: 'Brak danych' }), {
+                  status: 503,
+                  headers: { 'Content-Type': 'application/json' },
+                })
+              );
             });
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match(request);
-        })
+
+          return cachedResponse || fetchPromise;
+        });
+      })
     );
+  }
+
+  // Nie obsługuj żądań API - zawsze przepuść do sieci, również Network only
+  if (url.pathname.startsWith('/api/')) {
+    return;
   }
 });
 
